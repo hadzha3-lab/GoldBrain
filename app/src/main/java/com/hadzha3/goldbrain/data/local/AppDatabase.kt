@@ -20,6 +20,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun indexStateDao(): IndexStateDao
 
     companion object {
+        const val DATABASE_NAME =
+            "goldbrain.db"
+
         @Volatile
         private var instance: AppDatabase? = null
 
@@ -89,7 +92,7 @@ abstract class AppDatabase : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "goldbrain.db"
+                    DATABASE_NAME
                 )
                     .addMigrations(
                         MIGRATION_1_2,
