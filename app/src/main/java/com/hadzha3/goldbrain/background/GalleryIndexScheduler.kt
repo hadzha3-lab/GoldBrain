@@ -11,13 +11,26 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
 object GalleryIndexScheduler {
-    private const val ONE_TIME_NAME = "goldbrain-gallery-index-now"
-    private const val PERIODIC_NAME = "goldbrain-gallery-index-periodic"
+    private const val ONE_TIME_NAME =
+        "goldbrain-gallery-index-now"
+
+    private const val CONTINUATION_NAME =
+        "goldbrain-gallery-index-continuation"
+
+    private const val PERIODIC_NAME =
+        "goldbrain-gallery-index-periodic"
 
     fun startNow(
         context: Context
     ) {
-        WorkManager.getInstance(context).enqueueUniqueWork(
+        val manager =
+            WorkManager.getInstance(context)
+
+        manager.cancelUniqueWork(
+            CONTINUATION_NAME
+        )
+
+        manager.enqueueUniqueWork(
             ONE_TIME_NAME,
             ExistingWorkPolicy.REPLACE,
             oneTimeRequest()
@@ -27,26 +40,31 @@ object GalleryIndexScheduler {
     fun continueSoon(
         context: Context
     ) {
-        WorkManager.getInstance(context).enqueue(
-            oneTimeRequest(delaySeconds = 2)
-        )
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(
+                CONTINUATION_NAME,
+                ExistingWorkPolicy.REPLACE,
+                oneTimeRequest(delaySeconds = 2)
+            )
     }
 
     fun ensurePeriodic(
         context: Context
     ) {
-        val request = PeriodicWorkRequestBuilder<GalleryIndexWorker>(
-            6,
-            TimeUnit.HOURS
-        )
-            .setConstraints(baseConstraints())
-            .build()
+        val request =
+            PeriodicWorkRequestBuilder<GalleryIndexWorker>(
+                6,
+                TimeUnit.HOURS
+            )
+                .setConstraints(baseConstraints())
+                .build()
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            PERIODIC_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            request
-        )
+        WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                PERIODIC_NAME,
+                ExistingPeriodicWorkPolicy.UPDATE,
+                request
+            )
     }
 
     private fun oneTimeRequest(
@@ -66,6 +84,8 @@ object GalleryIndexScheduler {
     private fun baseConstraints(): Constraints =
         Constraints.Builder()
             .setRequiresBatteryNotLow(true)
-            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+            .setRequiredNetworkType(
+                NetworkType.NOT_REQUIRED
+            )
             .build()
 }
