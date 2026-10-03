@@ -12,4 +12,8 @@ interface GalleryMediaSource {
         indexedUris: Set<String>,
         limit: Int
     ): List<GalleryMediaItem>
+
+    fun countUnindexedImages(
+        indexedUris: Set<String>
+    ): Int
 }
