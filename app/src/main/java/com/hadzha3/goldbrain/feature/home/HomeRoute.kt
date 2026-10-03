@@ -340,32 +340,30 @@ fun HomeRoute(
         },
         onCameraClick = {
             if (
-                !MediaPermissions
+                MediaPermissions
                     .hasCameraHardware(
                         context
                     )
             ) {
-                return@HomeScreen
-            }
-
-            if (
-                MediaPermissions
-                    .hasCameraAccess(
-                        context
+                if (
+                    MediaPermissions
+                        .hasCameraAccess(
+                            context
+                        )
+                ) {
+                    cameraLauncher.launch(
+                        Intent(
+                            context,
+                            CameraActivity::class.java
+                        )
                     )
-            ) {
-                cameraLauncher.launch(
-                    Intent(
-                        context,
-                        CameraActivity::class.java
-                    )
-                )
-            } else {
-                cameraPermissionLauncher
-                    .launch(
-                        MediaPermissions
-                            .requiredCameraPermissions()
-                    )
+                } else {
+                    cameraPermissionLauncher
+                        .launch(
+                            MediaPermissions
+                                .requiredCameraPermissions()
+                        )
+                }
             }
         },
         cameraAvailable =
