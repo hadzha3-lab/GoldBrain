@@ -45,6 +45,10 @@ class IndexStatusRepository(
                 .toStatus()
         }
 
+    suspend fun current(): IndexStatus =
+        (dao.get() ?: IndexStateEntity())
+            .toStatus()
+
     suspend fun startRun(
         total: Int
     ) {
