@@ -17,20 +17,21 @@ class DominantColorAnalyzer(
 ) {
     suspend fun analyze(
         uri: Uri
-    ): DetectedColor? =
+    ): List<DetectedColor> =
         withContext(
             Dispatchers.IO
         ) {
             val bitmap =
                 decodePreview(
                     uri
-                ) ?: return@withContext null
+                ) ?: return@withContext emptyList()
 
             try {
-                classifier.classify(
-                    sampleBitmap(
+                classifier.classifyTop(
+                    samples = sampleBitmap(
                         bitmap
-                    )
+                    ),
+                    maxColors = MAX_COLOR_LABELS
                 )
             } finally {
                 bitmap.recycle()
@@ -228,6 +229,9 @@ class DominantColorAnalyzer(
     private companion object {
         const val TARGET_MAX_DIMENSION =
             192
+
+        const val MAX_COLOR_LABELS =
+            2
 
         const val SAMPLE_GRID =
             48
