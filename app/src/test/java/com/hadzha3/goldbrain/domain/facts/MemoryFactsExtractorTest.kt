@@ -111,6 +111,52 @@ class MemoryFactsExtractorTest {
     }
 
     @Test
+    fun isbnIsNotDuplicatedAsPhone() {
+        val facts =
+            MemoryFactsExtractor.extract(
+                "ISBN 978-5-17-123456-7"
+            )
+
+        assertTrue(
+            facts.any {
+                it.type ==
+                    MemoryFactType.ISBN
+            }
+        )
+
+        assertEquals(
+            0,
+            facts.count {
+                it.type ==
+                    MemoryFactType.PHONE
+            }
+        )
+    }
+
+    @Test
+    fun numericDateIsNotDuplicatedAsPhone() {
+        val facts =
+            MemoryFactsExtractor.extract(
+                "03.10.2026"
+            )
+
+        assertTrue(
+            facts.any {
+                it.type ==
+                    MemoryFactType.DATE
+            }
+        )
+
+        assertEquals(
+            0,
+            facts.count {
+                it.type ==
+                    MemoryFactType.PHONE
+            }
+        )
+    }
+
+    @Test
     fun duplicateFactsAreRemoved() {
         val facts =
             MemoryFactsExtractor.extract(
