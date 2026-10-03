@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hadzha3.goldbrain.data.MemoryEntity
 import com.hadzha3.goldbrain.data.MemoryRepository
+import com.hadzha3.goldbrain.gallery.GalleryIndexScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,8 +55,17 @@ class MainViewModel(
         progress.value = if (failed == 0) {
             "Готово"
         } else {
-            "Готово · ошибок: $failed"
+            "Готово · ошибок: ${failed}"
         }
         indexing.value = false
+    }
+
+    fun scheduleGalleryIndex() {
+        GalleryIndexScheduler.startNow(getApplication())
+        progress.value = "Галерея индексируется в фоне"
+    }
+
+    fun enablePeriodicGalleryIndex() {
+        GalleryIndexScheduler.ensurePeriodic(getApplication())
     }
 }
