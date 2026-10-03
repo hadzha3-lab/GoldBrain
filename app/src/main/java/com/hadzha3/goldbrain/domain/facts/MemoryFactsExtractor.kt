@@ -131,10 +131,34 @@ object MemoryFactsExtractor {
                         it.isDigit()
                     }
 
+                val prefix =
+                    source.substring(
+                        maxOf(
+                            0,
+                            match.range.first -
+                                PHONE_CONTEXT_CHARS
+                        ),
+                        match.range.first
+                    )
+
+                val looksLikeIsbn =
+                    prefix.contains(
+                        "isbn",
+                        ignoreCase = true
+                    )
+
+                val looksLikeDate =
+                    NUMERIC_DATE_REGEX
+                        .matches(
+                            value
+                        )
+
                 if (
                     digits in
                         MIN_PHONE_DIGITS..
-                            MAX_PHONE_DIGITS
+                            MAX_PHONE_DIGITS &&
+                    !looksLikeIsbn &&
+                    !looksLikeDate
                 ) {
                     add(
                         MemoryFact(
@@ -228,6 +252,9 @@ object MemoryFactsExtractor {
 
     private const val MAX_PHONE_DIGITS =
         15
+
+    private const val PHONE_CONTEXT_CHARS =
+        8
 
     private val MULTISPACE_REGEX =
         Regex("\\s+")
