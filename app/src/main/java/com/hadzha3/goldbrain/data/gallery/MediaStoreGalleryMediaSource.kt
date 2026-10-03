@@ -11,13 +11,57 @@ class MediaStoreGalleryMediaSource(
         indexedUris: Set<String>,
         limit: Int
     ): List<GalleryMediaItem> {
+        val result =
+            ArrayList<GalleryMediaItem>(
+                limit
+            )
+
+        queryImages { uri, createdAt ->
+            if (
+                uri.toString() !in indexedUris &&
+                result.size < limit
+            ) {
+                result +=
+                    GalleryMediaItem(
+                        uri = uri,
+                        createdAt = createdAt
+                    )
+            }
+
+            result.size < limit
+        }
+
+        return result
+    }
+
+    override fun countUnindexedImages(
+        indexedUris: Set<String>
+    ): Int {
+        var count = 0
+
+        queryImages { uri, _ ->
+            if (
+                uri.toString() !in indexedUris
+            ) {
+                count++
+            }
+            true
+        }
+
+        return count
+    }
+
+    private inline fun queryImages(
+        consume: (
+            android.net.Uri,
+            Long
+        ) -> Boolean
+    ) {
         val projection = arrayOf(
             MediaStore.Images.Media._ID,
             MediaStore.Images.Media.DATE_TAKEN,
             MediaStore.Images.Media.DATE_ADDED
         )
-
-        val result = ArrayList<GalleryMediaItem>(limit)
 
         context.contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -26,44 +70,66 @@ class MediaStoreGalleryMediaSource(
             null,
             "${MediaStore.Images.Media.DATE_ADDED} DESC"
         )?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(
-                MediaStore.Images.Media._ID
-            )
-            val takenColumn = cursor.getColumnIndexOrThrow(
-                MediaStore.Images.Media.DATE_TAKEN
-            )
-            val addedColumn = cursor.getColumnIndexOrThrow(
-                MediaStore.Images.Media.DATE_ADDED
-            )
+            val idColumn =
+                cursor.getColumnIndexOrThrow(
+                    MediaStore.Images.Media._ID
+                )
+
+            val takenColumn =
+                cursor.getColumnIndexOrThrow(
+                    MediaStore.Images.Media.DATE_TAKEN
+                )
+
+            val addedColumn =
+                cursor.getColumnIndexOrThrow(
+                    MediaStore.Images.Media.DATE_ADDED
+                )
 
             while (
-                cursor.moveToNext() &&
-                result.size < limit
+                cursor.moveToNext()
             ) {
-                val id = cursor.getLong(idColumn)
-                val uri = ContentUris.withAppendedId(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    id
-                )
+                val id =
+                    cursor.getLong(
+                        idColumn
+                    )
 
-                if (uri.toString() in indexedUris) {
-                    continue
-                }
+                val uri =
+                    ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        id
+                    )
 
-                val dateTaken = cursor.getLong(takenColumn)
-                val dateAddedSeconds = cursor.getLong(addedColumn)
+                val dateTaken =
+                    cursor.getLong(
+                        takenColumn
+                    )
 
-                result += GalleryMediaItem(
-                    uri = uri,
-                    createdAt = when {
-                        dateTaken > 0L -> dateTaken
-                        dateAddedSeconds > 0L -> dateAddedSeconds * 1000L
-                        else -> System.currentTimeMillis()
+                val dateAddedSeconds =
+                    cursor.getLong(
+                        addedColumn
+                    )
+
+                val createdAt =
+                    when {
+                        dateTaken > 0L ->
+                            dateTaken
+
+                        dateAddedSeconds > 0L ->
+                            dateAddedSeconds * 1000L
+
+                        else ->
+                            System.currentTimeMillis()
                     }
-                )
+
+                if (
+                    !consume(
+                        uri,
+                        createdAt
+                    )
+                ) {
+                    break
+                }
             }
         }
-
-        return result
     }
 }
