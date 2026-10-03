@@ -15,17 +15,21 @@ object GalleryIndexScheduler {
     private const val PERIODIC_NAME = "goldbrain-gallery-index-periodic"
 
     fun startNow(context: Context) {
-        val request = OneTimeWorkRequestBuilder<GalleryIndexWorker>()
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiresBatteryNotLow(true)
-                    .build()
-            )
-            .build()
+        val request = oneTimeRequest()
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             ONE_TIME_NAME,
             ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    fun continueSoon(context: Context) {
+        val request = oneTimeRequest(
+            delaySeconds = 2
+        )
+
+        WorkManager.getInstance(context).enqueue(
             request
         )
     }
@@ -35,12 +39,7 @@ object GalleryIndexScheduler {
             6,
             TimeUnit.HOURS
         )
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiresBatteryNotLow(true)
-                    .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-                    .build()
-            )
+            .setConstraints(baseConstraints())
             .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -49,4 +48,24 @@ object GalleryIndexScheduler {
             request
         )
     }
+
+    private fun oneTimeRequest(
+        delaySeconds: Long = 0
+    ) = OneTimeWorkRequestBuilder<GalleryIndexWorker>()
+        .setConstraints(baseConstraints())
+        .apply {
+            if (delaySeconds > 0) {
+                setInitialDelay(
+                    delaySeconds,
+                    TimeUnit.SECONDS
+                )
+            }
+        }
+        .build()
+
+    private fun baseConstraints(): Constraints =
+        Constraints.Builder()
+            .setRequiresBatteryNotLow(true)
+            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+            .build()
 }
