@@ -62,6 +62,24 @@ fun MemoryCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
+                if (
+                    item.userNote
+                        .isNotBlank()
+                ) {
+                    Text(
+                        text =
+                            item.userNote,
+                        style =
+                            MaterialTheme
+                                .typography
+                                .bodyMedium,
+                        maxLines = 2,
+                        overflow =
+                            TextOverflow
+                                .Ellipsis
+                    )
+                }
+
                 if (!item.isAvailable) {
                     Text(
                         text = stringResource(
