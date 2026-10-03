@@ -99,7 +99,7 @@ class GalleryIndexWorker(
                 CancellationException
         ) {
             throw cancellation
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
             statusRepository
                 .markError()
 
