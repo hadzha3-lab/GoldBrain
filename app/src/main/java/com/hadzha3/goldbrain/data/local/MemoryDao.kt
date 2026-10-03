@@ -50,6 +50,16 @@ interface MemoryDao {
         verifiedAt: Long
     )
 
+    @Query("""
+        UPDATE memories
+        SET userNote = :note
+        WHERE uri = :uri
+    """)
+    suspend fun updateUserNote(
+        uri: String,
+        note: String
+    )
+
     @Query("DELETE FROM memories")
     suspend fun clearAll()
 }
