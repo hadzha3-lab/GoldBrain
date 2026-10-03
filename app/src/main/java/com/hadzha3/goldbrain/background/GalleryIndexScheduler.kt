@@ -126,26 +126,26 @@ object GalleryIndexScheduler {
                 )
 
             val oneTime =
-                runCatching {
+                try {
                     manager
                         .getWorkInfosForUniqueWork(
                             ONE_TIME_NAME
                         )
                         .get()
-                }.getOrDefault(
-                    emptyList()
-                )
+                } catch (_: Exception) {
+                    return@withContext true
+                }
 
             val continuation =
-                runCatching {
+                try {
                     manager
                         .getWorkInfosForUniqueWork(
                             CONTINUATION_NAME
                         )
                         .get()
-                }.getOrDefault(
-                    emptyList()
-                )
+                } catch (_: Exception) {
+                    return@withContext true
+                }
 
             (oneTime + continuation)
                 .any {
