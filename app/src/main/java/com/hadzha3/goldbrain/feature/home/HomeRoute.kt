@@ -235,6 +235,9 @@ fun HomeRoute(
         if (showSettings) {
             settingsViewModel
                 .refreshPermissions()
+
+            settingsViewModel
+                .refreshStorage()
         }
     }
 
@@ -294,6 +297,9 @@ fun HomeRoute(
             onRecheckOriginals =
                 settingsViewModel::
                     recheckOriginals,
+            onClearTemporaryCache =
+                settingsViewModel::
+                    clearTemporaryCache,
             onClearIndex =
                 settingsViewModel::
                     clearIndex
