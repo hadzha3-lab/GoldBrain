@@ -1,5 +1,6 @@
 package com.hadzha3.goldbrain.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,6 +10,10 @@ data class IndexStateEntity(
     val state: String = STATE_IDLE,
     val indexedInRun: Int = 0,
     val failedInRun: Int = 0,
+    @ColumnInfo(defaultValue = "0")
+    val totalInRun: Int = 0,
+    @ColumnInfo(defaultValue = "0")
+    val startedAt: Long = 0L,
     val lastUpdatedAt: Long = System.currentTimeMillis()
 ) {
     companion object {
