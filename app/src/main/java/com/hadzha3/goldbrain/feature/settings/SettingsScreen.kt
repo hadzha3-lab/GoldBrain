@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,8 +40,11 @@ fun SettingsScreen(
     onAutoIndexChange: (Boolean) -> Unit,
     onIndexNow: () -> Unit,
     onRecheckOriginals: () -> Unit,
+    onClearTemporaryCache: () -> Unit,
     onClearIndex: () -> Unit
 ) {
+    val context =
+        LocalContext.current
     var showClearConfirmation by
         remember {
             mutableStateOf(false)
@@ -179,6 +183,30 @@ fun SettingsScreen(
                     )
             )
 
+            Text(
+                text =
+                    stringResource(
+                        R.string.settings_index_size,
+                        android.text.format.Formatter
+                            .formatShortFileSize(
+                                context,
+                                state.indexBytes
+                            )
+                    )
+            )
+
+            Text(
+                text =
+                    stringResource(
+                        R.string.settings_cache_size,
+                        android.text.format.Formatter
+                            .formatShortFileSize(
+                                context,
+                                state.cacheBytes
+                            )
+                    )
+            )
+
             if (
                 state.isIndexing ||
                 state.totalInRun > 0
@@ -228,6 +256,19 @@ fun SettingsScreen(
                 Text(
                     stringResource(
                         R.string.settings_recheck
+                    )
+                )
+            }
+
+            OutlinedButton(
+                onClick =
+                    onClearTemporaryCache,
+                enabled =
+                    state.cacheBytes > 0L
+            ) {
+                Text(
+                    stringResource(
+                        R.string.settings_clear_cache
                     )
                 )
             }
