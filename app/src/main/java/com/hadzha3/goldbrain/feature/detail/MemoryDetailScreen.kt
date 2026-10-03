@@ -14,8 +14,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -32,8 +37,17 @@ import java.util.Date
 fun MemoryDetailScreen(
     memory: MemoryEntity,
     onBack: () -> Unit,
-    onOpenOriginal: () -> Unit
+    onOpenOriginal: () -> Unit,
+    onSaveNote: (String) -> Unit
 ) {
+    var note by
+        rememberSaveable(
+            memory.uri
+        ) {
+            mutableStateOf(
+                memory.userNote
+            )
+        }
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
@@ -113,6 +127,47 @@ fun MemoryDetailScreen(
             }
         }
 
+        DetailSectionTitle(
+            title = stringResource(
+                R.string.detail_note
+            )
+        )
+
+        OutlinedTextField(
+            value = note,
+            onValueChange = {
+                note = it
+            },
+            modifier =
+                Modifier.fillMaxWidth(),
+            minLines = 2,
+            maxLines = 6,
+            placeholder = {
+                Text(
+                    stringResource(
+                        R.string.detail_note_hint
+                    )
+                )
+            }
+        )
+
+        Button(
+            onClick = {
+                onSaveNote(
+                    note
+                )
+            },
+            enabled =
+                note.trim() !=
+                    memory.userNote
+        ) {
+            Text(
+                stringResource(
+                    R.string.detail_note_save
+                )
+            )
+        }
+
         if (memory.labels.isNotBlank()) {
             DetailSection(
                 title = stringResource(
@@ -135,6 +190,21 @@ fun MemoryDetailScreen(
             modifier = Modifier.size(24.dp)
         )
     }
+}
+
+@Composable
+private fun DetailSectionTitle(
+    title: String
+) {
+    Text(
+        text = title,
+        style =
+            MaterialTheme
+                .typography
+                .titleMedium,
+        fontWeight =
+            FontWeight.SemiBold
+    )
 }
 
 @Composable
