@@ -2,6 +2,7 @@ package com.hadzha3.goldbrain.feature.home
 
 import android.Manifest
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
 import com.hadzha3.goldbrain.feature.camera.CameraActivity
+import com.hadzha3.goldbrain.feature.detail.MemoryDetailScreen
 
 @Composable
 fun HomeRoute(
@@ -20,6 +22,8 @@ fun HomeRoute(
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedMemory by
+        viewModel.selectedMemory.collectAsStateWithLifecycle()
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(100)
@@ -73,9 +77,27 @@ fun HomeRoute(
         }
     }
 
+    val memory = selectedMemory
+    if (memory != null) {
+        MemoryDetailScreen(
+            memory = memory,
+            onBack = viewModel::closeMemory,
+            onOpenOriginal = {
+                openOriginal(
+                    context = context,
+                    uri = Uri.parse(memory.uri)
+                )
+            }
+        )
+        return
+    }
+
     HomeScreen(
         state = state,
         onQueryChange = viewModel::onQueryChange,
+        onMemoryClick = {
+            viewModel.openMemory(it.uri)
+        },
         onGalleryClick = {
             if (MediaPermissions.hasGalleryAccess(context)) {
                 viewModel.startGalleryIndex()
@@ -108,4 +130,26 @@ fun HomeRoute(
             )
         }
     )
+}
+
+private fun openOriginal(
+    context: android.content.Context,
+    uri: Uri
+) {
+    val mimeType =
+        context.contentResolver.getType(uri) ?: "image/*"
+
+    val intent =
+        Intent(Intent.ACTION_VIEW)
+            .setDataAndType(
+                uri,
+                mimeType
+            )
+            .addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+
+    runCatching {
+        context.startActivity(intent)
+    }
 }
