@@ -304,6 +304,9 @@ fun HomeRoute(
             onRecheckOriginals =
                 settingsViewModel::
                     recheckOriginals,
+            onRetryFailedPhotos =
+                settingsViewModel::
+                    retryFailedPhotos,
             onClearTemporaryCache =
                 settingsViewModel::
                     clearTemporaryCache,
