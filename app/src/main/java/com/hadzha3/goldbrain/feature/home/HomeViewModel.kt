@@ -269,29 +269,45 @@ class HomeViewModel(
                     isBusy = true
                 )
 
-            repository.removeMemory(
-                uri
-            )
-
-            container
-                .indexFailureRepository
-                .clear(
-                    uri
-                )
-
-            container
-                .persistedMediaPermissionManager
-                .releaseReadGrant(
-                    Uri.parse(
+            try {
+                container
+                    .memoryIndexMaintenanceRepository
+                    .ignoreAndRemove(
                         uri
                     )
+
+                container
+                    .indexFailureRepository
+                    .clear(
+                        uri
+                    )
+
+                container
+                    .persistedMediaPermissionManager
+                    .releaseReadGrant(
+                        Uri.parse(
+                            uri
+                        )
+                    )
+
+                selectedUri.value =
+                    null
+
+                _detailActionState.value =
+                    MemoryDetailActionState()
+            } catch (
+                cancellation:
+                    CancellationException
+            ) {
+                throw cancellation
+            } catch (_: Exception) {
+                showDetailMessage(
+                    getApplication<Application>()
+                        .getString(
+                            R.string.detail_remove_failed
+                        )
                 )
-
-            selectedUri.value =
-                null
-
-            _detailActionState.value =
-                MemoryDetailActionState()
+            }
         }
     }
 
@@ -332,6 +348,12 @@ class HomeViewModel(
                     )
 
             runCatching {
+                container
+                    .memoryIndexMaintenanceRepository
+                    .allow(
+                        uri.toString()
+                    )
+
                 repository.index(
                     uri
                 )
