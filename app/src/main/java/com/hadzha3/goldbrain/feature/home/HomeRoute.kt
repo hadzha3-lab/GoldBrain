@@ -1,6 +1,5 @@
 package com.hadzha3.goldbrain.feature.home
 
-import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -109,9 +108,14 @@ fun HomeRoute(
         rememberLauncherForActivityResult(
             contract =
                 ActivityResultContracts
-                    .RequestPermission()
-        ) { granted ->
-            if (granted) {
+                    .RequestMultiplePermissions()
+        ) {
+            if (
+                MediaPermissions
+                    .hasCameraAccess(
+                        context
+                    )
+            ) {
                 cameraLauncher.launch(
                     Intent(
                         context,
@@ -344,9 +348,8 @@ fun HomeRoute(
             } else {
                 cameraPermissionLauncher
                     .launch(
-                        Manifest
-                            .permission
-                            .CAMERA
+                        MediaPermissions
+                            .requiredCameraPermissions()
                     )
             }
         },
