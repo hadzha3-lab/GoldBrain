@@ -20,6 +20,11 @@ class MlKitImageAnalyzer(
     private val labeler =
         ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
 
+    private val colorAnalyzer =
+        DominantColorAnalyzer(
+            context
+        )
+
     override suspend fun analyze(
         uri: Uri
     ): ImageAnalysis = coroutineScope {
@@ -35,16 +40,54 @@ class MlKitImageAnalyzer(
             runCatching {
                 labeler.process(image).await()
                     .asSequence()
-                    .filter { it.confidence >= MIN_LABEL_CONFIDENCE }
+                    .filter {
+                        it.confidence >=
+                            MIN_LABEL_CONFIDENCE
+                    }
                     .take(MAX_LABELS)
                     .map { it.text }
                     .toList()
-            }.getOrDefault(emptyList())
+            }.getOrDefault(
+                emptyList()
+            )
         }
 
-        val text = textDeferred.await().trim()
-        val labels = labelsDeferred.await()
-        val category = classify(text, labels)
+        val colorsDeferred = async {
+            runCatching {
+                colorAnalyzer
+                    .analyze(
+                        uri
+                    )
+                    .flatMap {
+                        it.labels()
+                    }
+            }.getOrDefault(
+                emptyList()
+            )
+        }
+
+        val text =
+            textDeferred
+                .await()
+                .trim()
+
+        val labels =
+            (
+                labelsDeferred.await() +
+                    colorsDeferred.await()
+            )
+                .distinctBy {
+                    it.lowercase()
+                }
+                .take(
+                    MAX_TOTAL_LABELS
+                )
+
+        val category =
+            classify(
+                text,
+                labels
+            )
 
         ImageAnalysis(
             title = buildTitle(category, text, labels),
@@ -91,6 +134,7 @@ class MlKitImageAnalyzer(
     private companion object {
         const val MIN_LABEL_CONFIDENCE = 0.60f
         const val MAX_LABELS = 8
+        const val MAX_TOTAL_LABELS = 12
 
         val RECEIPT_MARKERS = listOf(
             "total", "subtotal", "receipt", "invoice",
