@@ -47,10 +47,10 @@ class ColorClassifier {
                 )
 
             buckets[key] =
-                buckets.getOrDefault(
-                    key,
-                    0
-                ) + 1
+                (
+                    buckets[key]
+                        ?: 0
+                    ) + 1
         }
 
         val total =
