@@ -31,7 +31,9 @@ class SettingsViewModel(
     private val accessMode =
         MutableStateFlow(
             MediaPermissions
-                .galleryAccessMode(app)
+                .galleryAccessMode(
+                    app
+                )
         )
 
     private val autoIndexEnabled =
@@ -47,23 +49,22 @@ class SettingsViewModel(
                 .usage()
         )
 
-    val uiState =
+    private val coreState =
         combine(
             repository.count(),
             repository.unavailableCount(),
             autoIndexEnabled,
             accessMode,
-            indexStatusRepository.observe(),
-            storageUsage
+            indexStatusRepository.observe()
         ) {
                 count,
                 unavailable,
                 auto,
                 access,
-                status,
-                storage ->
+                status ->
             SettingsUiState(
-                memoryCount = count,
+                memoryCount =
+                    count,
                 unavailableCount =
                     unavailable,
                 autoIndexEnabled =
@@ -79,7 +80,18 @@ class SettingsViewModel(
                 totalInRun =
                     status.totalInRun,
                 progressFraction =
-                    status.progressFraction,
+                    status.progressFraction
+            )
+        }
+
+    val uiState =
+        combine(
+            coreState,
+            storageUsage
+        ) {
+                state,
+                storage ->
+            state.copy(
                 indexBytes =
                     storage.indexBytes,
                 cacheBytes =
@@ -96,7 +108,15 @@ class SettingsViewModel(
                     preferences
                         .autoIndexEnabled,
                 galleryAccessMode =
-                    accessMode.value
+                    accessMode.value,
+                indexBytes =
+                    storageUsage
+                        .value
+                        .indexBytes,
+                cacheBytes =
+                    storageUsage
+                        .value
+                        .cacheBytes
             )
         )
 
@@ -214,12 +234,14 @@ class SettingsViewModel(
                 .galleryIndexer
                 .clearIndex()
 
-            indexStatusRepository.reset()
-            refreshStorage()
+            indexStatusRepository
+                .reset()
 
             container
                 .persistedMediaPermissionManager
                 .releaseAllReadGrants()
+
+            refreshStorage()
         }
     }
 
