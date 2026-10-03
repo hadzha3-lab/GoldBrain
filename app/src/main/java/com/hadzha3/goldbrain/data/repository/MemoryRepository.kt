@@ -8,6 +8,7 @@ import com.hadzha3.goldbrain.data.media.MediaAccessChecker
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -20,12 +21,16 @@ class MemoryRepository(
     fun memories(
         query: String
     ): Flow<List<MemoryEntity>> =
-        dao.observeAll().map { items ->
-            searchEngine.search(
-                items,
-                query
+        dao.observeAll()
+            .map { items ->
+                searchEngine.search(
+                    items,
+                    query
+                )
+            }
+            .flowOn(
+                Dispatchers.Default
             )
-        }
 
     fun memory(
         uri: String
