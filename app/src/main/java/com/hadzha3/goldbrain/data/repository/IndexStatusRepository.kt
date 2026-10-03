@@ -16,8 +16,7 @@ data class IndexStatus(
 ) {
     val processedInRun: Int
         get() =
-            indexedInRun +
-                failedInRun
+            indexedInRun
 
     val progressFraction: Float
         get() =
@@ -25,7 +24,7 @@ data class IndexStatus(
                 if (isRunning) 0f else 1f
             } else {
                 (
-                    processedInRun
+                    indexedInRun
                         .toFloat() /
                         totalInRun
                             .toFloat()
