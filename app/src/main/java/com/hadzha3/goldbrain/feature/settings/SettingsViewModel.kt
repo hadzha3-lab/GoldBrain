@@ -182,7 +182,10 @@ class SettingsViewModel(
             autoIndexEnabled.value =
                 false
 
-            repository.clearIndex()
+            container
+                .galleryIndexer
+                .clearIndex()
+
             indexStatusRepository.reset()
 
             container
