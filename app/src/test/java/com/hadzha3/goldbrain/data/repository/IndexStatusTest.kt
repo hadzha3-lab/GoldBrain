@@ -5,7 +5,7 @@ import org.junit.Test
 
 class IndexStatusTest {
     @Test
-    fun progressUsesSuccessfullyIndexedItems() {
+    fun progressIncludesDeferredFailures() {
         val status =
             IndexStatus(
                 isRunning = true,
@@ -18,7 +18,7 @@ class IndexStatusTest {
             )
 
         assertEquals(
-            0.25f,
+            0.30f,
             status.progressFraction,
             0.0001f
         )
