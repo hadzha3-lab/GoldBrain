@@ -5,6 +5,7 @@ import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 data class SettingsUiState(
     val memoryCount: Int = 0,
     val unavailableCount: Int = 0,
+    val failedPhotoCount: Int = 0,
     val autoIndexEnabled: Boolean = true,
     val galleryAccessMode: GalleryAccessMode =
         GalleryAccessMode.NONE,
