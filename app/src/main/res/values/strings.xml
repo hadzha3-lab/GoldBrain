@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">GoldBrain</string>
+    <string name="home_gallery">Галерея</string>
+    <string name="home_camera">Камера</string>
+    <string name="home_gallery_hint">«Галерея» индексирует только те фото, к которым Android дал приложению доступ.</string>
+    <string name="home_search_label">Что ты хочешь найти?</string>
+    <string name="home_search_hint">Например: найди чек от наушников</string>
+    <string name="home_choose_photo">Выбрать фото</string>
+    <string name="home_empty">Дай доступ к галерее, сделай снимок или выбери несколько фото.</string>
+    <string name="home_nothing_found">Ничего не найдено</string>
+    <string name="home_originals_hint">оригиналы остаются в галерее</string>
+    <string name="camera_capture">Сфотографировать</string>
+    <string name="camera_close">Закрыть</string>
+    <string name="camera_open_error">Не удалось открыть камеру</string>
+    <string name="camera_save_error">Не удалось сохранить фото</string>
+    <string name="camera_uri_error">Фото сохранено, но Android не вернул его адрес</string>
+    <string name="index_gallery_background">Галерея индексируется в фоне</string>
+    <string name="index_done">Готово</string>
+    <string name="index_progress">Анализ %1$d из %2$d</string>
+    <string name="index_done_with_errors">Готово · ошибок: %1$d</string>
+
+    <plurals name="memory_count">
+        <item quantity="one">%d воспоминание</item>
+        <item quantity="few">%d воспоминания</item>
+        <item quantity="many">%d воспоминаний</item>
+        <item quantity="other">%d воспоминаний</item>
+    </plurals>
 </resources>
