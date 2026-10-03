@@ -10,6 +10,7 @@ import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
 import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
+import com.hadzha3.goldbrain.data.storage.LocalStorageManager
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 
 class AppContainer(
@@ -38,6 +39,12 @@ class AppContainer(
 
     val indexingPreferences: IndexingPreferences by lazy {
         IndexingPreferences(
+            appContext
+        )
+    }
+
+    val localStorageManager: LocalStorageManager by lazy {
+        LocalStorageManager(
             appContext
         )
     }
