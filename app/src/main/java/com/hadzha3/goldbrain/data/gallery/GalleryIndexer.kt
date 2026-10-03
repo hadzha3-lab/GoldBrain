@@ -1,6 +1,7 @@
 package com.hadzha3.goldbrain.data.gallery
 
 import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
+import com.hadzha3.goldbrain.data.repository.MemoryIndexMaintenanceRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
@@ -10,7 +11,9 @@ class GalleryIndexer(
     private val repository: MemoryRepository,
     private val mediaSource: GalleryMediaSource,
     private val failureRepository:
-        IndexFailureRepository
+        IndexFailureRepository,
+    private val maintenanceRepository:
+        MemoryIndexMaintenanceRepository
 ) {
     data class Result(
         val indexed: Int,
@@ -32,6 +35,8 @@ class GalleryIndexer(
         mutex.withLock {
             repository.clearIndex()
             failureRepository.clearAll()
+            maintenanceRepository
+                .clearIgnored()
         }
 
     suspend fun retryFailures() =
@@ -108,7 +113,9 @@ class GalleryIndexer(
         Set<String> =
         repository.indexedUris() +
             failureRepository
-                .deferredUris()
+                .deferredUris() +
+            maintenanceRepository
+                .ignoredUris()
 
     companion object {
         const val DEFAULT_BATCH_SIZE =
