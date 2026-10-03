@@ -4,6 +4,7 @@ import com.hadzha3.goldbrain.data.local.MemoryEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar
 
 class MemorySearchEngineTest {
     private val searchEngine =
@@ -71,6 +72,127 @@ class MemorySearchEngineTest {
         )
     }
 
+    @Test
+    fun yesterdayFiltersOutOtherDays() {
+        val now =
+            date(
+                year = 2026,
+                month = Calendar.OCTOBER,
+                day = 3,
+                hour = 12
+            )
+
+        val engine =
+            MemorySearchEngine {
+                now
+            }
+
+        val yesterday =
+            memory(
+                uri = "yesterday",
+                createdAt = date(
+                    year = 2026,
+                    month = Calendar.OCTOBER,
+                    day = 2,
+                    hour = 19
+                ),
+                category = "Парковка",
+                labels = "Parking, Car"
+            )
+
+        val today =
+            memory(
+                uri = "today",
+                createdAt = date(
+                    year = 2026,
+                    month = Calendar.OCTOBER,
+                    day = 3,
+                    hour = 8
+                ),
+                category = "Парковка",
+                labels = "Parking, Car"
+            )
+
+        val result = engine.search(
+            listOf(today, yesterday),
+            "где я парковался вчера"
+        )
+
+        assertEquals(
+            listOf("yesterday"),
+            result.map { it.uri }
+        )
+    }
+
+    @Test
+    fun summerQueryFindsMostRecentSummer() {
+        val now =
+            date(
+                year = 2026,
+                month = Calendar.OCTOBER,
+                day = 3
+            )
+
+        val engine =
+            MemorySearchEngine {
+                now
+            }
+
+        val summerBook =
+            memory(
+                uri = "summer-book",
+                createdAt = date(
+                    year = 2026,
+                    month = Calendar.JULY,
+                    day = 15
+                ),
+                category = "Книга",
+                labels = "Book"
+            )
+
+        val springBook =
+            memory(
+                uri = "spring-book",
+                createdAt = date(
+                    year = 2026,
+                    month = Calendar.APRIL,
+                    day = 15
+                ),
+                category = "Книга",
+                labels = "Book"
+            )
+
+        val result = engine.search(
+            listOf(springBook, summerBook),
+            "как называлась книга которую я фотографировал летом"
+        )
+
+        assertEquals(
+            listOf("summer-book"),
+            result.map { it.uri }
+        )
+    }
+
+    @Test
+    fun russianKeyQueryMatchesEnglishLabel() {
+        val key =
+            memory(
+                uri = "key",
+                labels = "Key"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(key),
+                "где запасной ключ"
+            )
+
+        assertEquals(
+            "key",
+            result.first().uri
+        )
+    }
+
     private fun memory(
         uri: String,
         createdAt: Long = 1L,
@@ -92,4 +214,24 @@ class MemorySearchEngineTest {
             labels
         ).joinToString(" ").lowercase()
     )
+
+    private fun date(
+        year: Int,
+        month: Int,
+        day: Int,
+        hour: Int = 12
+    ): Long =
+        Calendar.getInstance()
+            .apply {
+                clear()
+                set(
+                    year,
+                    month,
+                    day,
+                    hour,
+                    0,
+                    0
+                )
+            }
+            .timeInMillis
 }
