@@ -11,15 +11,17 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         MemoryEntity::class,
         IndexStateEntity::class,
-        IndexFailureEntity::class
+        IndexFailureEntity::class,
+        IgnoredMediaEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
     abstract fun indexStateDao(): IndexStateDao
     abstract fun indexFailureDao(): IndexFailureDao
+    abstract fun ignoredMediaDao(): IgnoredMediaDao
 
     companion object {
         const val DATABASE_NAME =
@@ -122,6 +124,23 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        private val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(
+                    database: SupportSQLiteDatabase
+                ) {
+                    database.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS ignored_media (
+                            uri TEXT NOT NULL,
+                            ignoredAt INTEGER NOT NULL,
+                            PRIMARY KEY(uri)
+                        )
+                        """.trimIndent()
+                    )
+                }
+            }
+
         fun get(
             context: Context
         ): AppDatabase =
@@ -135,7 +154,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_1_2,
                         MIGRATION_2_3,
                         MIGRATION_3_4,
-                        MIGRATION_4_5
+                        MIGRATION_4_5,
+                        MIGRATION_5_6
                     )
                     .build()
                     .also { instance = it }
