@@ -93,10 +93,32 @@ fun CameraScreen(
                                 previewView.surfaceProvider
                         }
 
+                    val cameraSelector =
+                        when {
+                            provider.hasCamera(
+                                CameraSelector
+                                    .DEFAULT_BACK_CAMERA
+                            ) ->
+                                CameraSelector
+                                    .DEFAULT_BACK_CAMERA
+
+                            provider.hasCamera(
+                                CameraSelector
+                                    .DEFAULT_FRONT_CAMERA
+                            ) ->
+                                CameraSelector
+                                    .DEFAULT_FRONT_CAMERA
+
+                            else ->
+                                error(
+                                    cameraOpenError
+                                )
+                        }
+
                     provider.unbindAll()
                     provider.bindToLifecycle(
                         lifecycleOwner,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        cameraSelector,
                         preview,
                         imageCapture
                     )
