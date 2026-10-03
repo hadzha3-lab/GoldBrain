@@ -7,6 +7,7 @@ import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -44,9 +45,13 @@ class SettingsViewModel(
 
     private val storageUsage =
         MutableStateFlow(
-            container
-                .localStorageManager
-                .usage()
+            com.hadzha3.goldbrain
+                .data
+                .storage
+                .LocalStorageUsage(
+                    indexBytes = 0L,
+                    cacheBytes = 0L
+                )
         )
 
     private val coreState =
@@ -121,18 +126,29 @@ class SettingsViewModel(
         )
 
     fun refreshStorage() {
-        storageUsage.value =
-            container
-                .localStorageManager
-                .usage()
+        viewModelScope.launch(
+            Dispatchers.IO
+        ) {
+            storageUsage.value =
+                container
+                    .localStorageManager
+                    .usage()
+        }
     }
 
     fun clearTemporaryCache() {
-        container
-            .localStorageManager
-            .clearTemporaryCache()
+        viewModelScope.launch(
+            Dispatchers.IO
+        ) {
+            container
+                .localStorageManager
+                .clearTemporaryCache()
 
-        refreshStorage()
+            storageUsage.value =
+                container
+                    .localStorageManager
+                    .usage()
+        }
     }
 
     fun refreshPermissions() {
@@ -243,6 +259,10 @@ class SettingsViewModel(
 
             refreshStorage()
         }
+    }
+
+    init {
+        refreshStorage()
     }
 
     private companion object {
