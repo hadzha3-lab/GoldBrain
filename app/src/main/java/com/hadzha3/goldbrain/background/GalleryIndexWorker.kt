@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
+import kotlinx.coroutines.CancellationException
 
 class GalleryIndexWorker(
     appContext: Context,
@@ -110,6 +111,11 @@ class GalleryIndexWorker(
                     output
                 )
             }
+        } catch (
+            cancellation:
+                CancellationException
+        ) {
+            throw cancellation
         } catch (_: Throwable) {
             statusRepository
                 .markError()
