@@ -1,6 +1,8 @@
 package com.hadzha3.goldbrain.data.gallery
 
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class GalleryIndexer(
     private val repository: MemoryRepository,
@@ -15,37 +17,41 @@ class GalleryIndexer(
 
     suspend fun indexNextBatch(
         batchSize: Int = DEFAULT_BATCH_SIZE
-    ): Result {
-        val candidates = mediaSource.unindexedImages(
-            indexedUris = repository.indexedUris(),
-            limit = batchSize
-        )
+    ): Result =
+        mutex.withLock {
+            val candidates = mediaSource.unindexedImages(
+                indexedUris = repository.indexedUris(),
+                limit = batchSize
+            )
 
-        var indexed = 0
-        var failed = 0
+            var indexed = 0
+            var failed = 0
 
-        candidates.forEach { item ->
-            runCatching {
-                repository.index(
-                    uri = item.uri,
-                    createdAt = item.createdAt
-                )
-            }.onSuccess {
-                indexed++
-            }.onFailure {
-                failed++
+            candidates.forEach { item ->
+                runCatching {
+                    repository.index(
+                        uri = item.uri,
+                        createdAt = item.createdAt
+                    )
+                }.onSuccess {
+                    indexed++
+                }.onFailure {
+                    failed++
+                }
             }
-        }
 
-        return Result(
-            indexed = indexed,
-            failed = failed,
-            candidates = candidates.size,
-            hasMore = candidates.size >= batchSize
-        )
-    }
+            Result(
+                indexed = indexed,
+                failed = failed,
+                candidates = candidates.size,
+                hasMore = candidates.size >= batchSize
+            )
+        }
 
     companion object {
         const val DEFAULT_BATCH_SIZE = 30
+
+        private val mutex =
+            Mutex()
     }
 }
