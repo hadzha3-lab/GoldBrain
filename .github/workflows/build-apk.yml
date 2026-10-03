@@ -49,6 +49,15 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
+      - name: Prepare Russian OCR model
+        shell: bash
+        run: |
+          mkdir -p app/src/main/assets/tessdata
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/rus.traineddata" \
+            --output app/src/main/assets/tessdata/rus.traineddata
+          test -s app/src/main/assets/tessdata/rus.traineddata
+
       - name: Run unit tests
         run: gradle --no-daemon :app:testDebugUnitTest --stacktrace
 
