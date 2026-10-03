@@ -46,6 +46,11 @@ class MemoryRepository(
         createdAt: Long =
             System.currentTimeMillis()
     ) {
+        val existingNote =
+            dao.userNote(
+                uri.toString()
+            ).orEmpty()
+
         val analysis =
             imageAnalyzer.analyze(uri)
 
@@ -79,7 +84,8 @@ class MemoryRepository(
                 searchableText =
                     searchableText,
                 isAvailable = true,
-                lastVerifiedAt = now
+                lastVerifiedAt = now,
+                userNote = existingNote
             )
         )
     }
@@ -110,6 +116,16 @@ class MemoryRepository(
                     verifiedAt = now
                 )
             }
+    }
+
+    suspend fun updateUserNote(
+        uri: String,
+        note: String
+    ) {
+        dao.updateUserNote(
+            uri = uri,
+            note = note.trim()
+        )
     }
 
     suspend fun clearIndex() {
