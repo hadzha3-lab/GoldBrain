@@ -9,6 +9,7 @@
     <string name="home_empty">Дай доступ к галерее, сделай снимок или выбери несколько фото.</string>
     <string name="home_nothing_found">Ничего не найдено</string>
     <string name="home_originals_hint">оригиналы остаются в галерее</string>
+    <string name="home_settings">Настройки</string>
     <string name="camera_capture">Сфотографировать</string>
     <string name="camera_close">Закрыть</string>
     <string name="camera_open_error">Не удалось открыть камеру</string>
@@ -19,6 +20,7 @@
     <string name="index_progress">Анализ %1$d из %2$d</string>
     <string name="index_done_with_errors">Готово · ошибок: %1$d</string>
     <string name="index_background_running">Фоновая индексация галереи…</string>
+    <string name="index_background_progress">Индексация: %1$d из %2$d</string>
     <string name="index_background_done">В фоне добавлено: %1$d</string>
     <string name="index_background_error">Фоновая индексация временно остановлена</string>
     <string name="memory_original_unavailable">Оригинал сейчас недоступен</string>
@@ -28,6 +30,33 @@
     <string name="detail_original_unavailable_hint">GoldBrain сохраняет распознанный текст и описание, поэтому память остаётся доступной для поиска.</string>
     <string name="detail_labels">Что распознано</string>
     <string name="detail_recognized_text">Распознанный текст</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_back">Назад</string>
+    <string name="settings_access_title">Доступ к галерее</string>
+    <string name="settings_access_full">Полный доступ к разрешённой Android галерее.</string>
+    <string name="settings_access_partial">Частичный доступ: GoldBrain видит только выбранные фотографии.</string>
+    <string name="settings_access_none">Доступ к галерее не выдан.</string>
+    <string name="settings_change_access">Изменить доступ</string>
+
+    <string name="settings_background_title">Фоновая работа</string>
+    <string name="settings_auto_index">Автоматически искать новые фото</string>
+    <string name="settings_auto_index_hint">Если включено, GoldBrain периодически проверяет разрешённую галерею и индексирует новые изображения локально.</string>
+
+    <string name="settings_index_title">Локальный индекс</string>
+    <string name="settings_memory_count">В индексе: %1$d</string>
+    <string name="settings_unavailable_count">Оригиналов недоступно: %1$d</string>
+    <string name="settings_index_progress">Добавлено: %1$d из %2$d · ошибок: %3$d</string>
+    <string name="settings_index_now">Индексировать сейчас</string>
+    <string name="settings_recheck">Проверить доступность оригиналов</string>
+
+    <string name="settings_privacy_title">Хранение и приватность</string>
+    <string name="settings_privacy_text">GoldBrain не копирует оригиналы фотографий. Локально сохраняются индекс, распознанный текст, категории и метки, необходимые для поиска.</string>
+    <string name="settings_clear_index">Очистить локальный индекс</string>
+    <string name="settings_clear_confirm_title">Очистить индекс?</string>
+    <string name="settings_clear_confirm_text">Будут удалены локальные результаты анализа и поиск начнёт с пустой базы. Оригиналы фотографий не удаляются. Фоновая индексация будет отключена.</string>
+    <string name="settings_clear_confirm">Очистить</string>
+    <string name="settings_cancel">Отмена</string>
 
     <plurals name="memory_count">
         <item quantity="one">%d воспоминание</item>
