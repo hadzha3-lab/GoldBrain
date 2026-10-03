@@ -1,6 +1,7 @@
 package com.hadzha3.goldbrain.di
 
 import android.content.Context
+import com.hadzha3.goldbrain.background.IndexRecoveryCoordinator
 import com.hadzha3.goldbrain.data.analysis.MlKitImageAnalyzer
 import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.gallery.MediaStoreGalleryMediaSource
@@ -78,6 +79,17 @@ class AppContainer(
             dao = database.indexFailureDao()
         )
     }
+
+    val indexRecoveryCoordinator:
+        IndexRecoveryCoordinator by lazy {
+            IndexRecoveryCoordinator(
+                context = appContext,
+                statusRepository =
+                    indexStatusRepository,
+                preferences =
+                    indexingPreferences
+            )
+        }
 
     private val galleryMediaSource by lazy {
         MediaStoreGalleryMediaSource(
