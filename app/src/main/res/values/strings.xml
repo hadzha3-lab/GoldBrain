@@ -40,6 +40,15 @@
     <string name="detail_note">Моя заметка</string>
     <string name="detail_note_hint">Например: запасной ключ лежит в верхнем ящике</string>
     <string name="detail_note_save">Сохранить заметку</string>
+    <string name="detail_management">Управление памятью</string>
+    <string name="detail_reanalyze">Повторить анализ</string>
+    <string name="detail_reanalyzing">Анализирую…</string>
+    <string name="detail_reanalyze_done">Анализ обновлён</string>
+    <string name="detail_reanalyze_failed">Не удалось повторить анализ</string>
+    <string name="detail_remove_from_index">Удалить из GoldBrain</string>
+    <string name="detail_remove_confirm_title">Удалить эту память?</string>
+    <string name="detail_remove_confirm_text">Из GoldBrain будут удалены распознанный текст, метки и заметка для этой фотографии. Оригинал в системной галерее останется.</string>
+    <string name="detail_remove_confirm">Удалить из GoldBrain</string>
 
     <string name="settings_title">Настройки</string>
     <string name="settings_back">Назад</string>
