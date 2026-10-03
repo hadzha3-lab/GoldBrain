@@ -1,5 +1,6 @@
 package com.hadzha3.goldbrain.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -12,6 +13,8 @@ data class MemoryEntity(
     val ocrText: String,
     val labels: String,
     val searchableText: String,
+    @ColumnInfo(defaultValue = "1")
     val isAvailable: Boolean = true,
+    @ColumnInfo(defaultValue = "0")
     val lastVerifiedAt: Long = 0L
 )
