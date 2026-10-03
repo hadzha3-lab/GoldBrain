@@ -11,6 +11,7 @@ import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
 import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
 import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
+import com.hadzha3.goldbrain.data.repository.MemoryIndexMaintenanceRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import com.hadzha3.goldbrain.data.storage.LocalStorageManager
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
@@ -68,6 +69,13 @@ class AppContainer(
         )
     }
 
+    val memoryIndexMaintenanceRepository:
+        MemoryIndexMaintenanceRepository by lazy {
+            MemoryIndexMaintenanceRepository(
+                database
+            )
+        }
+
     val indexStatusRepository: IndexStatusRepository by lazy {
         IndexStatusRepository(
             dao = database.indexStateDao()
@@ -104,7 +112,9 @@ class AppContainer(
             mediaSource =
                 galleryMediaSource,
             failureRepository =
-                indexFailureRepository
+                indexFailureRepository,
+            maintenanceRepository =
+                memoryIndexMaintenanceRepository
         )
     }
 }
