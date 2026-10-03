@@ -8,6 +8,8 @@ import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.data.local.MemoryEntity
+import com.hadzha3.goldbrain.feature.detail.MemoryDetailActionState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +49,14 @@ class HomeViewModel(
 
     private val selectedUri =
         MutableStateFlow<String?>(null)
+
+    private val _detailActionState =
+        MutableStateFlow(
+            MemoryDetailActionState()
+        )
+
+    val detailActionState =
+        _detailActionState
 
     private val memories =
         query
@@ -187,6 +197,104 @@ class HomeViewModel(
         selectedUri.value = null
     }
 
+    fun reanalyzeMemory(
+        memory: MemoryEntity
+    ) {
+        if (
+            _detailActionState
+                .value
+                .isBusy
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            _detailActionState.value =
+                MemoryDetailActionState(
+                    isBusy = true
+                )
+
+            try {
+                repository.index(
+                    uri =
+                        Uri.parse(
+                            memory.uri
+                        ),
+                    createdAt =
+                        memory.createdAt
+                )
+
+                container
+                    .indexFailureRepository
+                    .clear(
+                        memory.uri
+                    )
+
+                showDetailMessage(
+                    getApplication<Application>()
+                        .getString(
+                            R.string.detail_reanalyze_done
+                        )
+                )
+            } catch (
+                cancellation:
+                    CancellationException
+            ) {
+                throw cancellation
+            } catch (_: Exception) {
+                showDetailMessage(
+                    getApplication<Application>()
+                        .getString(
+                            R.string.detail_reanalyze_failed
+                        )
+                )
+            }
+        }
+    }
+
+    fun removeMemory(
+        uri: String
+    ) {
+        if (
+            _detailActionState
+                .value
+                .isBusy
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            _detailActionState.value =
+                MemoryDetailActionState(
+                    isBusy = true
+                )
+
+            repository.removeMemory(
+                uri
+            )
+
+            container
+                .indexFailureRepository
+                .clear(
+                    uri
+                )
+
+            container
+                .persistedMediaPermissionManager
+                .releaseReadGrant(
+                    Uri.parse(
+                        uri
+                    )
+                )
+
+            selectedUri.value =
+                null
+
+            _detailActionState.value =
+                MemoryDetailActionState()
+        }
+    }
+
     fun updateMemoryNote(
         uri: String,
         note: String
@@ -264,6 +372,30 @@ class HomeViewModel(
         }
     }
 
+    private suspend fun showDetailMessage(
+        message: String
+    ) {
+        _detailActionState.value =
+            MemoryDetailActionState(
+                isBusy = false,
+                message = message
+            )
+
+        delay(
+            DETAIL_STATUS_DURATION_MS
+        )
+
+        if (
+            _detailActionState
+                .value
+                .message ==
+            message
+        ) {
+            _detailActionState.value =
+                MemoryDetailActionState()
+        }
+    }
+
     fun startGalleryIndex() {
         localStatus.value = ""
 
@@ -296,5 +428,8 @@ class HomeViewModel(
 
         const val SEARCH_DEBOUNCE_MS =
             140L
+
+        const val DETAIL_STATUS_DURATION_MS =
+            2_500L
     }
 }
