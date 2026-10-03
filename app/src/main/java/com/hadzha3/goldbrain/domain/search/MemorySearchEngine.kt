@@ -1,12 +1,21 @@
 package com.hadzha3.goldbrain.domain.search
 
 import com.hadzha3.goldbrain.data.local.MemoryEntity
+import com.hadzha3.goldbrain.domain.facts.MemoryFactsExtractor
 import java.text.Normalizer
 import java.util.Calendar
 
 class MemorySearchEngine(
     private val nowProvider: () -> Long = System::currentTimeMillis
 ) {
+    private val factSearchCache =
+        object : LinkedHashMap<String, CachedFactSearch>(128, 0.75f, true) {
+            override fun removeEldestEntry(
+                eldest: MutableMap.MutableEntry<String, CachedFactSearch>?
+            ): Boolean =
+                size > MAX_FACT_CACHE_SIZE
+        }
+
     fun search(
         items: List<MemoryEntity>,
         query: String
@@ -73,6 +82,12 @@ class MemorySearchEngine(
         val category =
             normalize(item.category)
 
+        val factSearchText =
+            factsSearchText(item)
+
+        val normalizedFactSearchText =
+            normalize(factSearchText)
+
         val haystack =
             normalize(
                 listOf(
@@ -81,7 +96,8 @@ class MemorySearchEngine(
                     item.ocrText,
                     item.labels,
                     item.userNote,
-                    item.searchableText
+                    item.searchableText,
+                    factSearchText
                 ).joinToString(" ")
             )
 
@@ -118,9 +134,19 @@ class MemorySearchEngine(
                 0
             }
 
+        val factBonus =
+            words.count { term ->
+                matches(
+                    haystack =
+                        normalizedFactSearchText,
+                    term = term
+                )
+            } * FACT_BONUS
+
         return hits * TERM_SCORE +
             exactPhraseBonus +
-            categoryBonus
+            categoryBonus +
+            factBonus
     }
 
     private fun matches(
@@ -168,6 +194,56 @@ class MemorySearchEngine(
             exact +
                 stemmed
             ).distinct()
+    }
+
+    private fun factsSearchText(
+        item: MemoryEntity
+    ): String {
+        val signature =
+            31 * item.ocrText.hashCode() +
+                item.userNote.hashCode()
+
+        synchronized(
+            factSearchCache
+        ) {
+            val cached =
+                factSearchCache[
+                    item.uri
+                ]
+
+            if (
+                cached != null &&
+                cached.signature ==
+                    signature
+            ) {
+                return cached.text
+            }
+        }
+
+        val text =
+            MemoryFactsExtractor
+                .searchableText(
+                    MemoryFactsExtractor
+                        .extract(
+                            item.ocrText,
+                            item.userNote
+                        )
+                )
+
+        synchronized(
+            factSearchCache
+        ) {
+            factSearchCache[
+                item.uri
+            ] =
+                CachedFactSearch(
+                    signature =
+                        signature,
+                    text = text
+                )
+        }
+
+        return text
     }
 
     private fun buildTemporalFilter(
@@ -416,12 +492,19 @@ class MemorySearchEngine(
             )
             .trim()
 
+    private data class CachedFactSearch(
+        val signature: Int,
+        val text: String
+    )
+
     private companion object {
         const val MIN_TERM_LENGTH = 2
         const val TERM_SCORE = 5
         const val EXACT_PHRASE_BONUS = 10
         const val CATEGORY_BONUS = 3
+        const val FACT_BONUS = 4
         const val DAYS_IN_WEEK = 7
+        const val MAX_FACT_CACHE_SIZE = 512
 
         val WHITESPACE =
             Regex("\\s+")
@@ -613,6 +696,74 @@ class MemorySearchEngine(
                         "earphones",
                         "earbuds",
                         "headset"
+                    ),
+                "стоил" to
+                    listOf(
+                        "сумма",
+                        "цена",
+                        "стоимость",
+                        "amount",
+                        "price",
+                        "total",
+                        "money"
+                    ),
+                "цен" to
+                    listOf(
+                        "сумма",
+                        "стоимость",
+                        "amount",
+                        "price",
+                        "total",
+                        "money"
+                    ),
+                "сумм" to
+                    listOf(
+                        "цена",
+                        "стоимость",
+                        "amount",
+                        "price",
+                        "total",
+                        "money"
+                    ),
+                "телефон" to
+                    listOf(
+                        "phone",
+                        "tel",
+                        "mobile",
+                        "контакт"
+                    ),
+                "номер" to
+                    listOf(
+                        "phone",
+                        "tel",
+                        "mobile",
+                        "телефон"
+                    ),
+                "почт" to
+                    listOf(
+                        "email",
+                        "e-mail",
+                        "контакт"
+                    ),
+                "ссыл" to
+                    listOf(
+                        "url",
+                        "website",
+                        "web",
+                        "сайт"
+                    ),
+                "сайт" to
+                    listOf(
+                        "url",
+                        "website",
+                        "web",
+                        "ссылка"
+                    ),
+                "дат" to
+                    listOf(
+                        "date",
+                        "дата",
+                        "когда"
                     )
             )
 
