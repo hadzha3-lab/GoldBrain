@@ -184,6 +184,10 @@ class SettingsViewModel(
 
             repository.clearIndex()
             indexStatusRepository.reset()
+
+            container
+                .persistedMediaPermissionManager
+                .releaseAllReadGrants()
         }
     }
 
