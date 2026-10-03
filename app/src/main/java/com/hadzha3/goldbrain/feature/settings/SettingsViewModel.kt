@@ -7,6 +7,7 @@ import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
+import com.hadzha3.goldbrain.data.storage.LocalStorageUsage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,10 +46,7 @@ class SettingsViewModel(
 
     private val storageUsage =
         MutableStateFlow(
-            com.hadzha3.goldbrain
-                .data
-                .storage
-                .LocalStorageUsage(
+            LocalStorageUsage(
                     indexBytes = 0L,
                     cacheBytes = 0L
                 )
