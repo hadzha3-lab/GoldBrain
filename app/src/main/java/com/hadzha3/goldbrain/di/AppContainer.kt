@@ -5,6 +5,8 @@ import com.hadzha3.goldbrain.data.analysis.MlKitImageAnalyzer
 import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.gallery.MediaStoreGalleryMediaSource
 import com.hadzha3.goldbrain.data.local.AppDatabase
+import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
+import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 
@@ -25,11 +27,22 @@ class AppContainer(
         MemorySearchEngine()
     }
 
+    private val mediaAccessChecker by lazy {
+        AndroidMediaAccessChecker(appContext)
+    }
+
     val memoryRepository: MemoryRepository by lazy {
         MemoryRepository(
             dao = database.memoryDao(),
             imageAnalyzer = imageAnalyzer,
-            searchEngine = searchEngine
+            searchEngine = searchEngine,
+            mediaAccessChecker = mediaAccessChecker
+        )
+    }
+
+    val indexStatusRepository: IndexStatusRepository by lazy {
+        IndexStatusRepository(
+            dao = database.indexStateDao()
         )
     }
 
