@@ -248,6 +248,28 @@ class MemorySearchEngineTest {
     }
 
     @Test
+    fun userNoteParticipatesInSearch() {
+        val key =
+            memory(
+                uri = "spare-key",
+                labels = "Key",
+                note =
+                    "Запасной лежит в верхнем ящике"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(key),
+                "верхний ящик"
+            )
+
+        assertEquals(
+            "spare-key",
+            result.first().uri
+        )
+    }
+
+    @Test
     fun russianKeyQueryMatchesEnglishLabel() {
         val key =
             memory(
@@ -273,7 +295,8 @@ class MemorySearchEngineTest {
         category: String = "Память",
         title: String = "",
         text: String = "",
-        labels: String = ""
+        labels: String = "",
+        note: String = ""
     ) = MemoryEntity(
         uri = uri,
         createdAt = createdAt,
@@ -286,7 +309,8 @@ class MemorySearchEngineTest {
             title,
             text,
             labels
-        ).joinToString(" ").lowercase()
+        ).joinToString(" ").lowercase(),
+        userNote = note
     )
 
     private fun date(
