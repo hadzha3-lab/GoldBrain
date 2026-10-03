@@ -2,6 +2,7 @@ package com.hadzha3.goldbrain.background
 
 import android.content.Context
 import androidx.work.Constraints
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -33,7 +34,9 @@ object GalleryIndexScheduler {
         manager.enqueueUniqueWork(
             ONE_TIME_NAME,
             ExistingWorkPolicy.REPLACE,
-            oneTimeRequest()
+            oneTimeRequest(
+                isNewRun = true
+            )
         )
     }
 
@@ -44,7 +47,10 @@ object GalleryIndexScheduler {
             .enqueueUniqueWork(
                 CONTINUATION_NAME,
                 ExistingWorkPolicy.REPLACE,
-                oneTimeRequest(delaySeconds = 2)
+                oneTimeRequest(
+                    delaySeconds = 2,
+                    isNewRun = false
+                )
             )
     }
 
@@ -56,7 +62,14 @@ object GalleryIndexScheduler {
                 6,
                 TimeUnit.HOURS
             )
-                .setConstraints(baseConstraints())
+                .setConstraints(
+                    baseConstraints()
+                )
+                .setInputData(
+                    workerInput(
+                        isNewRun = true
+                    )
+                )
                 .build()
 
         WorkManager.getInstance(context)
@@ -67,10 +80,49 @@ object GalleryIndexScheduler {
             )
     }
 
+    fun cancelPeriodic(
+        context: Context
+    ) {
+        WorkManager.getInstance(context)
+            .cancelUniqueWork(
+                PERIODIC_NAME
+            )
+    }
+
+    fun cancelActive(
+        context: Context
+    ) {
+        val manager =
+            WorkManager.getInstance(context)
+
+        manager.cancelUniqueWork(
+            ONE_TIME_NAME
+        )
+
+        manager.cancelUniqueWork(
+            CONTINUATION_NAME
+        )
+    }
+
+    fun cancelAll(
+        context: Context
+    ) {
+        cancelActive(context)
+        cancelPeriodic(context)
+    }
+
     private fun oneTimeRequest(
-        delaySeconds: Long = 0
+        delaySeconds: Long = 0,
+        isNewRun: Boolean
     ) = OneTimeWorkRequestBuilder<GalleryIndexWorker>()
-        .setConstraints(baseConstraints())
+        .setConstraints(
+            baseConstraints()
+        )
+        .setInputData(
+            workerInput(
+                isNewRun = isNewRun
+            )
+        )
         .apply {
             if (delaySeconds > 0) {
                 setInitialDelay(
@@ -80,6 +132,16 @@ object GalleryIndexScheduler {
             }
         }
         .build()
+
+    private fun workerInput(
+        isNewRun: Boolean
+    ) =
+        Data.Builder()
+            .putBoolean(
+                GalleryIndexWorker.KEY_NEW_RUN,
+                isNewRun
+            )
+            .build()
 
     private fun baseConstraints(): Constraints =
         Constraints.Builder()
