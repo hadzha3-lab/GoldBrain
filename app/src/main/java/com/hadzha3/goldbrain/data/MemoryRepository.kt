@@ -20,6 +20,8 @@ class MemoryRepository(context: Context) {
 
     suspend fun exists(uri: Uri): Boolean = dao.exists(uri.toString())
 
+    suspend fun indexedUris(): Set<String> = dao.allUris().toHashSet()
+
     suspend fun index(
         uri: Uri,
         createdAt: Long = System.currentTimeMillis()
