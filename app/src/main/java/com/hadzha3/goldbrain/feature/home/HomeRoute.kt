@@ -256,6 +256,13 @@ fun HomeRoute(
                         memory.uri
                     )
                 )
+            },
+            onSaveNote = { note ->
+                homeViewModel
+                    .updateMemoryNote(
+                        uri = memory.uri,
+                        note = note
+                    )
             }
         )
         return
