@@ -105,6 +105,21 @@ class SettingsViewModel(
         }
     }
 
+    fun onPermissionsChanged() {
+        refreshPermissions()
+
+        if (
+            accessMode.value !=
+            GalleryAccessMode.NONE &&
+            autoIndexEnabled.value
+        ) {
+            GalleryIndexScheduler
+                .ensurePeriodic(
+                    getApplication()
+                )
+        }
+    }
+
     fun setAutoIndexEnabled(
         enabled: Boolean
     ) {
