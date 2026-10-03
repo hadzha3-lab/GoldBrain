@@ -340,6 +340,15 @@ fun HomeRoute(
         },
         onCameraClick = {
             if (
+                !MediaPermissions
+                    .hasCameraHardware(
+                        context
+                    )
+            ) {
+                return@HomeScreen
+            }
+
+            if (
                 MediaPermissions
                     .hasCameraAccess(
                         context
@@ -359,6 +368,11 @@ fun HomeRoute(
                     )
             }
         },
+        cameraAvailable =
+            MediaPermissions
+                .hasCameraHardware(
+                    context
+                ),
         onPickPhotosClick = {
             photoPicker.launch(
                 PickVisualMediaRequest(
