@@ -8,3 +8,6 @@ captures/
 .externalNativeBuild/
 .cxx/
 **/build/
+
+# Generated OCR language data
+app/src/main/assets/tessdata/*.traineddata
