@@ -8,15 +8,19 @@ import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.data.local.MemoryEntity
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 class HomeViewModel(
     app: Application
 ) : AndroidViewModel(app) {
@@ -45,9 +49,14 @@ class HomeViewModel(
         MutableStateFlow<String?>(null)
 
     private val memories =
-        query.flatMapLatest(
-            repository::memories
-        )
+        query
+            .debounce(
+                SEARCH_DEBOUNCE_MS
+            )
+            .distinctUntilChanged()
+            .flatMapLatest(
+                repository::memories
+            )
 
     private val memoryCount =
         repository.count()
@@ -284,5 +293,8 @@ class HomeViewModel(
     private companion object {
         const val LOCAL_STATUS_DURATION_MS =
             2_500L
+
+        const val SEARCH_DEBOUNCE_MS =
+            140L
     }
 }
