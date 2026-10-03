@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "app/**"
+      - "gradle/**"
       - "*.gradle.kts"
       - "gradle.properties"
       - ".github/workflows/build-apk.yml"
@@ -16,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    name: Build GoldBrain debug APK
+    name: Test and build GoldBrain debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -39,7 +40,6 @@ jobs:
             echo "sdkmanager not found"
             exit 1
           fi
-          echo "Using $SDKMANAGER"
           "$SDKMANAGER" --version
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
@@ -48,6 +48,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.11.1"
+
+      - name: Run unit tests
+        run: gradle --no-daemon :app:testDebugUnitTest --stacktrace
 
       - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug --stacktrace
