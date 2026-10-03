@@ -16,6 +16,7 @@ coil = "3.2.0"
 junit = "4.13.2"
 tesseract4android = "4.9.0"
 exifinterface = "1.4.1"
+sqlite-jdbc = "3.53.4.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
@@ -42,6 +43,7 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 junit = { module = "junit:junit", version.ref = "junit" }
 tesseract4android = { module = "cz.adaptech.tesseract4android:tesseract4android", version.ref = "tesseract4android" }
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
