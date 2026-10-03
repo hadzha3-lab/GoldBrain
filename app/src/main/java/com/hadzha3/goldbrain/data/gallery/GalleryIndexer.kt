@@ -2,6 +2,7 @@ package com.hadzha3.goldbrain.data.gallery
 
 import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -71,6 +72,11 @@ class GalleryIndexer(
                         )
 
                     indexed++
+                } catch (
+                    cancellation:
+                        CancellationException
+                ) {
+                    throw cancellation
                 } catch (
                     error: Throwable
                 ) {
