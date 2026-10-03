@@ -13,8 +13,8 @@ android {
         applicationId = "com.hadzha3.goldbrain"
         minSdk = 23
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     buildFeatures {
@@ -44,11 +44,20 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui-viewbinding")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation("androidx.room:room-runtime:2.8.5")
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
+
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
+
+    val cameraX = "1.4.2"
+    implementation("androidx.camera:camera-core:${cameraX}")
+    implementation("androidx.camera:camera-camera2:${cameraX}")
+    implementation("androidx.camera:camera-lifecycle:${cameraX}")
+    implementation("androidx.camera:camera-view:${cameraX}")
 
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     implementation("com.google.android.gms:play-services-mlkit-image-labeling:16.0.8")
