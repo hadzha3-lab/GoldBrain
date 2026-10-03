@@ -133,6 +133,14 @@ class MemoryRepository(
         )
     }
 
+    suspend fun removeMemory(
+        uri: String
+    ) {
+        dao.deleteByUri(
+            uri
+        )
+    }
+
     suspend fun clearIndex() {
         dao.clearAll()
     }
