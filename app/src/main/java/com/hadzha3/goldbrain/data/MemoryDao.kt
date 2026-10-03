@@ -18,4 +18,7 @@ interface MemoryDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM memories WHERE uri = :uri LIMIT 1)")
     suspend fun exists(uri: String): Boolean
+
+    @Query("SELECT uri FROM memories")
+    suspend fun allUris(): List<String>
 }
