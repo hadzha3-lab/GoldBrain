@@ -48,6 +48,11 @@ fun HomeRoute(
             .selectedMemory
             .collectAsStateWithLifecycle()
 
+    val detailActionState by
+        homeViewModel
+            .detailActionState
+            .collectAsStateWithLifecycle()
+
     val settingsState by
         settingsViewModel
             .uiState
@@ -247,6 +252,8 @@ fun HomeRoute(
     if (memory != null) {
         MemoryDetailScreen(
             memory = memory,
+            actionState =
+                detailActionState,
             onBack =
                 homeViewModel::closeMemory,
             onOpenOriginal = {
@@ -262,6 +269,18 @@ fun HomeRoute(
                     .updateMemoryNote(
                         uri = memory.uri,
                         note = note
+                    )
+            },
+            onReanalyze = {
+                homeViewModel
+                    .reanalyzeMemory(
+                        memory
+                    )
+            },
+            onRemove = {
+                homeViewModel
+                    .removeMemory(
+                        memory.uri
                     )
             }
         )
