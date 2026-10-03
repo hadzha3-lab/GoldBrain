@@ -51,6 +51,15 @@ interface MemoryDao {
     )
 
     @Query("""
+        SELECT userNote FROM memories
+        WHERE uri = :uri
+        LIMIT 1
+    """)
+    suspend fun userNote(
+        uri: String
+    ): String?
+
+    @Query("""
         UPDATE memories
         SET userNote = :note
         WHERE uri = :uri
