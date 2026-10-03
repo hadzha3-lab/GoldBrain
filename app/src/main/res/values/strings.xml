@@ -49,6 +49,7 @@
     <string name="detail_remove_confirm_title">Удалить эту память?</string>
     <string name="detail_remove_confirm_text">Из GoldBrain будут удалены распознанный текст, метки и заметка для этой фотографии. Оригинал в системной галерее останется.</string>
     <string name="detail_remove_confirm">Удалить из GoldBrain</string>
+    <string name="detail_remove_failed">Не удалось удалить память из GoldBrain</string>
 
     <string name="settings_title">Настройки</string>
     <string name="settings_back">Назад</string>
