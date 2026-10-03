@@ -271,14 +271,8 @@ class HomeViewModel(
 
             try {
                 container
-                    .memoryIndexMaintenanceRepository
+                    .galleryIndexer
                     .ignoreAndRemove(
-                        uri
-                    )
-
-                container
-                    .indexFailureRepository
-                    .clear(
                         uri
                     )
 
