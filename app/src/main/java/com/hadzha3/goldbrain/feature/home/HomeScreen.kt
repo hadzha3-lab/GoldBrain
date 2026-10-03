@@ -39,6 +39,7 @@ fun HomeScreen(
     onMemoryClick: (MemoryEntity) -> Unit,
     onGalleryClick: () -> Unit,
     onCameraClick: () -> Unit,
+    cameraAvailable: Boolean,
     onPickPhotosClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
@@ -137,7 +138,9 @@ fun HomeScreen(
                 onGalleryClick =
                     onGalleryClick,
                 onCameraClick =
-                    onCameraClick
+                    onCameraClick,
+                cameraAvailable =
+                    cameraAvailable
             )
 
             Text(
@@ -201,7 +204,8 @@ fun HomeScreen(
 @Composable
 private fun HomeActions(
     onGalleryClick: () -> Unit,
-    onCameraClick: () -> Unit
+    onCameraClick: () -> Unit,
+    cameraAvailable: Boolean
 ) {
     Row(
         modifier =
@@ -227,6 +231,8 @@ private fun HomeActions(
         OutlinedButton(
             onClick =
                 onCameraClick,
+            enabled =
+                cameraAvailable,
             modifier =
                 Modifier.weight(1f)
         ) {
