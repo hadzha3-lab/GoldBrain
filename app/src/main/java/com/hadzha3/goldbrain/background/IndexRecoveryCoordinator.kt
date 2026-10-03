@@ -16,6 +16,25 @@ class IndexRecoveryCoordinator(
         val status =
             statusRepository.current()
 
+        val hasGalleryAccess =
+            MediaPermissions
+                .hasGalleryAccess(
+                    context
+                )
+
+        if (!hasGalleryAccess) {
+            GalleryIndexScheduler
+                .cancelAll(
+                    context
+                )
+
+            if (status.isRunning) {
+                statusRepository.reset()
+            }
+
+            return
+        }
+
         val activeWork =
             GalleryIndexScheduler
                 .hasActiveIndexWork(
@@ -29,10 +48,7 @@ class IndexRecoveryCoordinator(
                 hasActiveWork =
                     activeWork,
                 hasGalleryAccess =
-                    MediaPermissions
-                        .hasGalleryAccess(
-                            context
-                        )
+                    true
             )
         ) {
             IndexRecoveryAction.NONE ->
@@ -49,14 +65,15 @@ class IndexRecoveryCoordinator(
         }
 
         if (
-            preferences.autoIndexEnabled &&
-            MediaPermissions
-                .hasGalleryAccess(
-                    context
-                )
+            preferences.autoIndexEnabled
         ) {
             GalleryIndexScheduler
                 .ensurePeriodic(
+                    context
+                )
+        } else {
+            GalleryIndexScheduler
+                .cancelPeriodic(
                     context
                 )
         }
