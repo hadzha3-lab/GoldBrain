@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
     implementation(libs.mlkit.image.labeling)
     implementation(libs.coroutines.play.services)
+    implementation(libs.tesseract4android)
     implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
