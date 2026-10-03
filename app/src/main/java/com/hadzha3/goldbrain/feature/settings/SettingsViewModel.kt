@@ -164,6 +164,11 @@ class SettingsViewModel(
                 .cancelAll(
                     getApplication()
                 )
+
+            viewModelScope.launch {
+                indexStatusRepository
+                    .reset()
+            }
         }
     }
 
