@@ -8,16 +8,23 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoryDao {
     @Upsert
-    suspend fun upsert(item: MemoryEntity)
+    suspend fun upsert(
+        item: MemoryEntity
+    )
 
     @Query("SELECT * FROM memories ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<MemoryEntity>>
 
     @Query("SELECT * FROM memories WHERE uri = :uri LIMIT 1")
-    fun observeByUri(uri: String): Flow<MemoryEntity?>
+    fun observeByUri(
+        uri: String
+    ): Flow<MemoryEntity?>
 
     @Query("SELECT COUNT(*) FROM memories")
     fun count(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM memories WHERE isAvailable = 0")
+    fun unavailableCount(): Flow<Int>
 
     @Query("SELECT uri FROM memories")
     suspend fun allUris(): List<String>
@@ -27,7 +34,9 @@ interface MemoryDao {
         ORDER BY lastVerifiedAt ASC
         LIMIT :limit
     """)
-    suspend fun urisForVerification(limit: Int): List<String>
+    suspend fun urisForVerification(
+        limit: Int
+    ): List<String>
 
     @Query("""
         UPDATE memories
@@ -40,4 +49,7 @@ interface MemoryDao {
         available: Boolean,
         verifiedAt: Long
     )
+
+    @Query("DELETE FROM memories")
+    suspend fun clearAll()
 }
