@@ -23,6 +23,11 @@ class GalleryIndexer(
             )
         }
 
+    suspend fun clearIndex() =
+        mutex.withLock {
+            repository.clearIndex()
+        }
+
     suspend fun indexNextBatch(
         batchSize: Int = DEFAULT_BATCH_SIZE
     ): Result =
