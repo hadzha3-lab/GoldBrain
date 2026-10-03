@@ -103,6 +103,14 @@ object MediaPermissions {
             )
         }
 
+    fun hasCameraHardware(
+        context: Context
+    ): Boolean =
+        context.packageManager
+            .hasSystemFeature(
+                PackageManager.FEATURE_CAMERA_ANY
+            )
+
     fun hasCameraAccess(
         context: Context
     ): Boolean =
