@@ -8,6 +8,7 @@ import com.hadzha3.goldbrain.data.local.AppDatabase
 import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
 import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
+import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
 import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import com.hadzha3.goldbrain.data.storage.LocalStorageManager
@@ -72,6 +73,12 @@ class AppContainer(
         )
     }
 
+    val indexFailureRepository: IndexFailureRepository by lazy {
+        IndexFailureRepository(
+            dao = database.indexFailureDao()
+        )
+    }
+
     private val galleryMediaSource by lazy {
         MediaStoreGalleryMediaSource(
             appContext
@@ -83,7 +90,9 @@ class AppContainer(
             repository =
                 memoryRepository,
             mediaSource =
-                galleryMediaSource
+                galleryMediaSource,
+            failureRepository =
+                indexFailureRepository
         )
     }
 }
