@@ -40,19 +40,28 @@ class SettingsViewModel(
                 .autoIndexEnabled
         )
 
+    private val storageUsage =
+        MutableStateFlow(
+            container
+                .localStorageManager
+                .usage()
+        )
+
     val uiState =
         combine(
             repository.count(),
             repository.unavailableCount(),
             autoIndexEnabled,
             accessMode,
-            indexStatusRepository.observe()
+            indexStatusRepository.observe(),
+            storageUsage
         ) {
                 count,
                 unavailable,
                 auto,
                 access,
-                status ->
+                status,
+                storage ->
             SettingsUiState(
                 memoryCount = count,
                 unavailableCount =
@@ -70,7 +79,11 @@ class SettingsViewModel(
                 totalInRun =
                     status.totalInRun,
                 progressFraction =
-                    status.progressFraction
+                    status.progressFraction,
+                indexBytes =
+                    storage.indexBytes,
+                cacheBytes =
+                    storage.cacheBytes
             )
         }.stateIn(
             viewModelScope,
@@ -86,6 +99,21 @@ class SettingsViewModel(
                     accessMode.value
             )
         )
+
+    fun refreshStorage() {
+        storageUsage.value =
+            container
+                .localStorageManager
+                .usage()
+    }
+
+    fun clearTemporaryCache() {
+        container
+            .localStorageManager
+            .clearTemporaryCache()
+
+        refreshStorage()
+    }
 
     fun refreshPermissions() {
         accessMode.value =
@@ -187,6 +215,7 @@ class SettingsViewModel(
                 .clearIndex()
 
             indexStatusRepository.reset()
+            refreshStorage()
 
             container
                 .persistedMediaPermissionManager
