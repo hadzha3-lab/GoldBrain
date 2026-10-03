@@ -25,6 +25,11 @@ class MlKitImageAnalyzer(
             context
         )
 
+    private val cyrillicRecognizer =
+        TesseractCyrillicRecognizer(
+            context
+        )
+
     override suspend fun analyze(
         uri: Uri
     ): ImageAnalysis = coroutineScope {
@@ -66,14 +71,45 @@ class MlKitImageAnalyzer(
             )
         }
 
-        val text =
+        val primaryText =
             textDeferred
                 .await()
                 .trim()
 
+        val primaryLabels =
+            labelsDeferred.await()
+
+        val cyrillicText =
+            if (
+                SupplementalOcrHeuristics
+                    .shouldRunCyrillicOcr(
+                        primaryText =
+                            primaryText,
+                        labels =
+                            primaryLabels
+                    )
+            ) {
+                runCatching {
+                    cyrillicRecognizer
+                        .recognize(
+                            uri
+                        )
+                }.getOrDefault(
+                    ""
+                )
+            } else {
+                ""
+            }
+
+        val text =
+            mergeText(
+                primaryText,
+                cyrillicText
+            )
+
         val labels =
             (
-                labelsDeferred.await() +
+                primaryLabels +
                     colorsDeferred.await()
             )
                 .distinctBy {
@@ -96,6 +132,30 @@ class MlKitImageAnalyzer(
             labels = labels
         )
     }
+
+    private fun mergeText(
+        primary: String,
+        supplemental: String
+    ): String =
+        sequenceOf(
+            primary,
+            supplemental
+        )
+            .flatMap {
+                it.lineSequence()
+            }
+            .map {
+                it.trim()
+            }
+            .filter {
+                it.isNotBlank()
+            }
+            .distinctBy {
+                it.lowercase()
+            }
+            .joinToString(
+                "\n"
+            )
 
     private fun classify(
         text: String,
