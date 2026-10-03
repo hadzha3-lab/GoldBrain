@@ -99,7 +99,7 @@ class SettingsViewModel(
             GalleryAccessMode.NONE
         ) {
             GalleryIndexScheduler
-                .cancelActive(
+                .cancelAll(
                     getApplication()
                 )
         }
