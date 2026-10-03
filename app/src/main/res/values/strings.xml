@@ -18,6 +18,16 @@
     <string name="index_done">Готово</string>
     <string name="index_progress">Анализ %1$d из %2$d</string>
     <string name="index_done_with_errors">Готово · ошибок: %1$d</string>
+    <string name="index_background_running">Фоновая индексация галереи…</string>
+    <string name="index_background_done">В фоне добавлено: %1$d</string>
+    <string name="index_background_error">Фоновая индексация временно остановлена</string>
+    <string name="memory_original_unavailable">Оригинал сейчас недоступен</string>
+    <string name="detail_back">Назад</string>
+    <string name="detail_open_original">Открыть оригинал</string>
+    <string name="detail_original_unavailable">Оригинал фотографии недоступен</string>
+    <string name="detail_original_unavailable_hint">GoldBrain сохраняет распознанный текст и описание, поэтому память остаётся доступной для поиска.</string>
+    <string name="detail_labels">Что распознано</string>
+    <string name="detail_recognized_text">Распознанный текст</string>
 
     <plurals name="memory_count">
         <item quantity="one">%d воспоминание</item>
