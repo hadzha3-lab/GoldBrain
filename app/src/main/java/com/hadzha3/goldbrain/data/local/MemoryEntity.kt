@@ -11,5 +11,7 @@ data class MemoryEntity(
     val title: String,
     val ocrText: String,
     val labels: String,
-    val searchableText: String
+    val searchableText: String,
+    val isAvailable: Boolean = true,
+    val lastVerifiedAt: Long = 0L
 )
