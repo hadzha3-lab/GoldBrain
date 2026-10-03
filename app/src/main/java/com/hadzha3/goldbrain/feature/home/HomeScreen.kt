@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +39,8 @@ fun HomeScreen(
     onMemoryClick: (MemoryEntity) -> Unit,
     onGalleryClick: () -> Unit,
     onCameraClick: () -> Unit,
-    onPickPhotosClick: () -> Unit
+    onPickPhotosClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Scaffold(
         floatingActionButton = {
@@ -51,7 +53,9 @@ fun HomeScreen(
                         )
                     )
                 },
-                icon = { Text("＋") }
+                icon = {
+                    Text("＋")
+                }
             )
         }
     ) { padding ->
@@ -59,16 +63,53 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(
+                    horizontal = 16.dp
+                ),
+            verticalArrangement =
+                Arrangement.spacedBy(
+                    12.dp
+                )
         ) {
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+            Spacer(
+                Modifier.height(
+                    8.dp
+                )
             )
+
+            Row(
+                modifier =
+                    Modifier.fillMaxWidth(),
+                verticalAlignment =
+                    Alignment.CenterVertically,
+                horizontalArrangement =
+                    Arrangement
+                        .SpaceBetween
+            ) {
+                Text(
+                    text =
+                        stringResource(
+                            R.string.app_name
+                        ),
+                    style =
+                        MaterialTheme
+                            .typography
+                            .headlineMedium,
+                    fontWeight =
+                        FontWeight.Bold
+                )
+
+                TextButton(
+                    onClick =
+                        onSettingsClick
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.home_settings
+                        )
+                    )
+                }
+            }
 
             Text(
                 text = buildString {
@@ -86,25 +127,36 @@ fun HomeScreen(
                         )
                     )
                 },
-                style = MaterialTheme.typography.bodyMedium
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodyMedium
             )
 
             HomeActions(
-                onGalleryClick = onGalleryClick,
-                onCameraClick = onCameraClick
+                onGalleryClick =
+                    onGalleryClick,
+                onCameraClick =
+                    onCameraClick
             )
 
             Text(
-                text = stringResource(
-                    R.string.home_gallery_hint
-                ),
-                style = MaterialTheme.typography.bodySmall
+                text =
+                    stringResource(
+                        R.string.home_gallery_hint
+                    ),
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodySmall
             )
 
             OutlinedTextField(
                 value = state.query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
+                onValueChange =
+                    onQueryChange,
+                modifier =
+                    Modifier.fillMaxWidth(),
                 singleLine = true,
                 label = {
                     Text(
@@ -124,19 +176,23 @@ fun HomeScreen(
 
             if (
                 state.isIndexing ||
-                state.statusText.isNotBlank()
+                state.statusText
+                    .isNotBlank()
             ) {
                 AssistChip(
                     onClick = {},
                     label = {
-                        Text(state.statusText)
+                        Text(
+                            state.statusText
+                        )
                     }
                 )
             }
 
             HomeContent(
                 state = state,
-                onMemoryClick = onMemoryClick
+                onMemoryClick =
+                    onMemoryClick
             )
         }
     }
@@ -148,24 +204,36 @@ private fun HomeActions(
     onCameraClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier =
+            Modifier.fillMaxWidth(),
+        horizontalArrangement =
+            Arrangement.spacedBy(
+                8.dp
+            )
     ) {
         Button(
-            onClick = onGalleryClick,
-            modifier = Modifier.weight(1f)
+            onClick =
+                onGalleryClick,
+            modifier =
+                Modifier.weight(1f)
         ) {
             Text(
-                stringResource(R.string.home_gallery)
+                stringResource(
+                    R.string.home_gallery
+                )
             )
         }
 
         OutlinedButton(
-            onClick = onCameraClick,
-            modifier = Modifier.weight(1f)
+            onClick =
+                onCameraClick,
+            modifier =
+                Modifier.weight(1f)
         ) {
             Text(
-                stringResource(R.string.home_camera)
+                stringResource(
+                    R.string.home_camera
+                )
             )
         }
     }
@@ -174,16 +242,26 @@ private fun HomeActions(
 @Composable
 private fun HomeContent(
     state: HomeUiState,
-    onMemoryClick: (MemoryEntity) -> Unit
+    onMemoryClick:
+        (MemoryEntity) -> Unit
 ) {
-    if (state.memories.isEmpty()) {
+    if (
+        state.memories.isEmpty()
+    ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier.fillMaxSize(),
+            contentAlignment =
+                Alignment.Center
         ) {
             Text(
-                if (state.query.isBlank()) {
-                    stringResource(R.string.home_empty)
+                if (
+                    state.query
+                        .isBlank()
+                ) {
+                    stringResource(
+                        R.string.home_empty
+                    )
                 } else {
                     stringResource(
                         R.string.home_nothing_found
@@ -195,17 +273,27 @@ private fun HomeContent(
     }
 
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = 96.dp)
+        verticalArrangement =
+            Arrangement.spacedBy(
+                10.dp
+            ),
+        contentPadding =
+            PaddingValues(
+                bottom = 96.dp
+            )
     ) {
         items(
             items = state.memories,
-            key = { it.uri }
+            key = {
+                it.uri
+            }
         ) { memory ->
             MemoryCard(
                 item = memory,
                 onClick = {
-                    onMemoryClick(memory)
+                    onMemoryClick(
+                        memory
+                    )
                 }
             )
         }
