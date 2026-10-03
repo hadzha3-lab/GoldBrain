@@ -125,11 +125,49 @@ class MemorySearchEngine(
     private fun matches(
         haystack: String,
         term: String
-    ): Boolean =
-        haystack.contains(term) ||
-            SYNONYMS[term]
-                .orEmpty()
-                .any(haystack::contains)
+    ): Boolean {
+        if (
+            haystack.contains(
+                term
+            )
+        ) {
+            return true
+        }
+
+        return synonymsFor(
+            term
+        ).any(
+            haystack::contains
+        )
+    }
+
+    private fun synonymsFor(
+        term: String
+    ): List<String> {
+        val exact =
+            SYNONYMS[
+                term
+            ].orEmpty()
+
+        val stemmed =
+            STEM_SYNONYMS
+                .asSequence()
+                .filter {
+                    term.startsWith(
+                        it.key
+                    )
+                }
+                .flatMap {
+                    it.value
+                        .asSequence()
+                }
+                .toList()
+
+        return (
+            exact +
+                stemmed
+            ).distinct()
+    }
 
     private fun buildTemporalFilter(
         query: String
@@ -450,6 +488,132 @@ class MemorySearchEngine(
             "day",
             "before"
         )
+
+        val STEM_SYNONYMS =
+            mapOf(
+                "красн" to
+                    listOf(
+                        "red",
+                        "красн"
+                    ),
+                "оранж" to
+                    listOf(
+                        "orange",
+                        "оранж"
+                    ),
+                "желт" to
+                    listOf(
+                        "yellow",
+                        "желт"
+                    ),
+                "зел" to
+                    listOf(
+                        "green",
+                        "зел"
+                    ),
+                "голуб" to
+                    listOf(
+                        "cyan",
+                        "blue",
+                        "голуб"
+                    ),
+                "син" to
+                    listOf(
+                        "blue",
+                        "син"
+                    ),
+                "фиолет" to
+                    listOf(
+                        "purple",
+                        "фиолет"
+                    ),
+                "розов" to
+                    listOf(
+                        "pink",
+                        "розов"
+                    ),
+                "корич" to
+                    listOf(
+                        "brown",
+                        "корич"
+                    ),
+                "черн" to
+                    listOf(
+                        "black",
+                        "черн"
+                    ),
+                "бел" to
+                    listOf(
+                        "white",
+                        "бел"
+                    ),
+                "сер" to
+                    listOf(
+                        "gray",
+                        "grey",
+                        "сер"
+                    ),
+                "машин" to
+                    listOf(
+                        "car",
+                        "vehicle",
+                        "машин"
+                    ),
+                "автомоб" to
+                    listOf(
+                        "car",
+                        "vehicle"
+                    ),
+                "парков" to
+                    listOf(
+                        "parking",
+                        "car",
+                        "vehicle"
+                    ),
+                "книг" to
+                    listOf(
+                        "book",
+                        "isbn",
+                        "publisher"
+                    ),
+                "чек" to
+                    listOf(
+                        "receipt",
+                        "invoice",
+                        "total",
+                        "итого"
+                    ),
+                "квитанц" to
+                    listOf(
+                        "receipt",
+                        "invoice"
+                    ),
+                "билет" to
+                    listOf(
+                        "ticket",
+                        "admission",
+                        "event"
+                    ),
+                "контакт" to
+                    listOf(
+                        "email",
+                        "phone",
+                        "tel",
+                        "linkedin"
+                    ),
+                "ключ" to
+                    listOf(
+                        "key",
+                        "keys"
+                    ),
+                "наушник" to
+                    listOf(
+                        "headphones",
+                        "earphones",
+                        "earbuds",
+                        "headset"
+                    )
+            )
 
         val SYNONYMS = mapOf(
             "чек" to listOf(
