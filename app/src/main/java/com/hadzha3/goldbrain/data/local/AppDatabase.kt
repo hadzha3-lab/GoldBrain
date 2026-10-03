@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MemoryEntity::class,
         IndexStateEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -85,6 +85,21 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        private val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(
+                    database: SupportSQLiteDatabase
+                ) {
+                    database.execSQL(
+                        """
+                        ALTER TABLE memories
+                        ADD COLUMN userNote TEXT
+                        NOT NULL DEFAULT ''
+                        """.trimIndent()
+                    )
+                }
+            }
+
         fun get(
             context: Context
         ): AppDatabase =
@@ -96,7 +111,8 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         MIGRATION_1_2,
-                        MIGRATION_2_3
+                        MIGRATION_2_3,
+                        MIGRATION_3_4
                     )
                     .build()
                     .also { instance = it }
