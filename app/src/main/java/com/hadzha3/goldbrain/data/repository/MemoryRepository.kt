@@ -6,8 +6,10 @@ import com.hadzha3.goldbrain.data.local.MemoryDao
 import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.data.media.MediaAccessChecker
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class MemoryRepository(
     private val dao: MemoryDao,
@@ -85,6 +87,8 @@ class MemoryRepository(
     suspend fun verifyAvailability(
         limit: Int =
             DEFAULT_VERIFICATION_BATCH
+    ) = withContext(
+        Dispatchers.IO
     ) {
         val now =
             System.currentTimeMillis()
