@@ -30,6 +30,13 @@
     <string name="detail_original_unavailable_hint">GoldBrain сохраняет распознанный текст и описание, поэтому память остаётся доступной для поиска.</string>
     <string name="detail_labels">Что распознано</string>
     <string name="detail_recognized_text">Распознанный текст</string>
+    <string name="detail_facts">Полезные данные</string>
+    <string name="fact_money">Сумма</string>
+    <string name="fact_email">E-mail</string>
+    <string name="fact_phone">Телефон</string>
+    <string name="fact_url">Ссылка</string>
+    <string name="fact_date">Дата</string>
+    <string name="fact_isbn">ISBN</string>
     <string name="detail_note">Моя заметка</string>
     <string name="detail_note_hint">Например: запасной ключ лежит в верхнем ящике</string>
     <string name="detail_note_save">Сохранить заметку</string>
