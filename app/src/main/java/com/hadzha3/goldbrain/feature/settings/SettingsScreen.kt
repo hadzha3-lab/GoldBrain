@@ -40,6 +40,7 @@ fun SettingsScreen(
     onAutoIndexChange: (Boolean) -> Unit,
     onIndexNow: () -> Unit,
     onRecheckOriginals: () -> Unit,
+    onRetryFailedPhotos: () -> Unit,
     onClearTemporaryCache: () -> Unit,
     onClearIndex: () -> Unit
 ) {
@@ -186,6 +187,14 @@ fun SettingsScreen(
             Text(
                 text =
                     stringResource(
+                        R.string.settings_failed_photo_count,
+                        state.failedPhotoCount
+                    )
+            )
+
+            Text(
+                text =
+                    stringResource(
                         R.string.settings_index_size,
                         android.text.format.Formatter
                             .formatShortFileSize(
@@ -256,6 +265,21 @@ fun SettingsScreen(
                 Text(
                     stringResource(
                         R.string.settings_recheck
+                    )
+                )
+            }
+
+            OutlinedButton(
+                onClick =
+                    onRetryFailedPhotos,
+                enabled =
+                    state.failedPhotoCount > 0 &&
+                        state.galleryAccessMode !=
+                            GalleryAccessMode.NONE
+            ) {
+                Text(
+                    stringResource(
+                        R.string.settings_retry_failed
                     )
                 )
             }
