@@ -33,13 +33,6 @@ class GalleryIndexWorker(
                         GalleryIndexer.DEFAULT_BATCH_SIZE
                     )
 
-            statusRepository.markFinished(
-                indexed = result.indexed,
-                failed = result.failed,
-                hasMore = result.hasMore &&
-                    result.indexed > 0
-            )
-
             val output = Data.Builder()
                 .putInt(KEY_INDEXED, result.indexed)
                 .putInt(KEY_FAILED, result.failed)
@@ -47,22 +40,33 @@ class GalleryIndexWorker(
                 .build()
 
             if (
-                result.hasMore &&
-                result.indexed > 0
+                result.failed > 0 &&
+                result.indexed == 0
             ) {
+                statusRepository.markError(
+                    indexed = result.indexed,
+                    failed = result.failed
+                )
+                return@runCatching Result.failure(output)
+            }
+
+            val shouldContinue =
+                result.hasMore &&
+                    result.indexed > 0
+
+            statusRepository.markFinished(
+                indexed = result.indexed,
+                failed = result.failed,
+                hasMore = shouldContinue
+            )
+
+            if (shouldContinue) {
                 GalleryIndexScheduler.continueSoon(
                     applicationContext
                 )
             }
 
-            if (
-                result.failed > 0 &&
-                result.indexed == 0
-            ) {
-                Result.failure(output)
-            } else {
-                Result.success(output)
-            }
+            Result.success(output)
         }.getOrElse {
             statusRepository.markError()
             Result.retry()
