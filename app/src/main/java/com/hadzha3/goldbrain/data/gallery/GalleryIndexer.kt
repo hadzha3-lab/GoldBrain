@@ -15,14 +15,24 @@ class GalleryIndexer(
         val hasMore: Boolean
     )
 
+    suspend fun pendingCount(): Int =
+        mutex.withLock {
+            mediaSource.countUnindexedImages(
+                indexedUris =
+                    repository.indexedUris()
+            )
+        }
+
     suspend fun indexNextBatch(
         batchSize: Int = DEFAULT_BATCH_SIZE
     ): Result =
         mutex.withLock {
-            val candidates = mediaSource.unindexedImages(
-                indexedUris = repository.indexedUris(),
-                limit = batchSize
-            )
+            val candidates =
+                mediaSource.unindexedImages(
+                    indexedUris =
+                        repository.indexedUris(),
+                    limit = batchSize
+                )
 
             var indexed = 0
             var failed = 0
@@ -31,7 +41,8 @@ class GalleryIndexer(
                 runCatching {
                     repository.index(
                         uri = item.uri,
-                        createdAt = item.createdAt
+                        createdAt =
+                            item.createdAt
                     )
                 }.onSuccess {
                     indexed++
@@ -43,8 +54,11 @@ class GalleryIndexer(
             Result(
                 indexed = indexed,
                 failed = failed,
-                candidates = candidates.size,
-                hasMore = candidates.size >= batchSize
+                candidates =
+                    candidates.size,
+                hasMore =
+                    candidates.size >=
+                        batchSize
             )
         }
 
