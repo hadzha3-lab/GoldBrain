@@ -13,18 +13,26 @@ class GalleryIndexWorker(
     override suspend fun doWork(): Result {
         return runCatching {
             val result = GalleryScanner(applicationContext)
-                .scanRecent(batchSize = 40)
+                .scanNextBatch(batchSize = 30)
 
             val output = Data.Builder()
                 .putInt(KEY_INDEXED, result.indexed)
-                .putInt(KEY_SKIPPED, result.skipped)
                 .putInt(KEY_FAILED, result.failed)
+                .putInt(KEY_CANDIDATES, result.candidates)
                 .build()
 
-            if (result.failed > 0 && result.indexed == 0) {
-                Result.retry()
-            } else {
-                Result.success(output)
+            if (result.hasMore && result.indexed > 0) {
+                GalleryIndexScheduler.continueSoon(
+                    applicationContext
+                )
+            }
+
+            when {
+                result.failed > 0 && result.indexed == 0 ->
+                    Result.failure(output)
+
+                else ->
+                    Result.success(output)
             }
         }.getOrElse {
             Result.retry()
@@ -33,7 +41,7 @@ class GalleryIndexWorker(
 
     companion object {
         const val KEY_INDEXED = "indexed"
-        const val KEY_SKIPPED = "skipped"
         const val KEY_FAILED = "failed"
+        const val KEY_CANDIDATES = "candidates"
     }
 }
