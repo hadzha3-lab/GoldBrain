@@ -39,6 +39,21 @@ class GalleryIndexer(
                 .clearIgnored()
         }
 
+    suspend fun ignoreAndRemove(
+        uri: String
+    ) =
+        mutex.withLock {
+            maintenanceRepository
+                .ignoreAndRemove(
+                    uri
+                )
+
+            failureRepository
+                .clear(
+                    uri
+                )
+        }
+
     suspend fun retryFailures() =
         mutex.withLock {
             failureRepository.clearAll()
