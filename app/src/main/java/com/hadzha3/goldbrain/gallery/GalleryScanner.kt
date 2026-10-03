@@ -11,44 +11,44 @@ class GalleryScanner(
 ) {
     data class ScanResult(
         val indexed: Int,
-        val skipped: Int,
         val failed: Int,
+        val candidates: Int,
         val hasMore: Boolean
     )
 
-    suspend fun scanRecent(
-        batchSize: Int = 40
+    suspend fun scanNextBatch(
+        batchSize: Int = 30
     ): ScanResult {
         val repository = MemoryRepository(context)
-        val items = queryImages(limit = batchSize + 1)
+        val indexedUris = repository.indexedUris()
+        val candidates = queryUnindexed(
+            indexedUris = indexedUris,
+            limit = batchSize
+        )
 
         var indexed = 0
-        var skipped = 0
         var failed = 0
 
-        items.take(batchSize).forEach { item ->
-            if (repository.exists(item.uri)) {
-                skipped++
-            } else {
-                val result = runCatching {
-                    repository.index(
-                        uri = item.uri,
-                        createdAt = item.createdAt
-                    )
-                }
-                if (result.isSuccess) indexed++ else failed++
+        candidates.forEach { item ->
+            val result = runCatching {
+                repository.index(
+                    uri = item.uri,
+                    createdAt = item.createdAt
+                )
             }
+            if (result.isSuccess) indexed++ else failed++
         }
 
         return ScanResult(
             indexed = indexed,
-            skipped = skipped,
             failed = failed,
-            hasMore = items.size > batchSize
+            candidates = candidates.size,
+            hasMore = candidates.size >= batchSize
         )
     }
 
-    private fun queryImages(
+    private fun queryUnindexed(
+        indexedUris: Set<String>,
         limit: Int
     ): List<GalleryItem> {
         val projection = arrayOf(
@@ -76,15 +76,22 @@ class GalleryScanner(
                 MediaStore.Images.Media.DATE_ADDED
             )
 
-            while (cursor.moveToNext() && result.size < limit) {
+            while (
+                cursor.moveToNext() &&
+                result.size < limit
+            ) {
                 val id = cursor.getLong(idColumn)
-                val dateTaken = cursor.getLong(takenColumn)
-                val dateAddedSeconds = cursor.getLong(addedColumn)
-
                 val uri = ContentUris.withAppendedId(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     id
                 )
+
+                if (uri.toString() in indexedUris) {
+                    continue
+                }
+
+                val dateTaken = cursor.getLong(takenColumn)
+                val dateAddedSeconds = cursor.getLong(addedColumn)
 
                 result += GalleryItem(
                     uri = uri,
