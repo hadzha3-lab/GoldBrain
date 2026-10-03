@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.data.local.MemoryEntity
+import com.hadzha3.goldbrain.domain.facts.MemoryFact
+import com.hadzha3.goldbrain.domain.facts.MemoryFactType
+import com.hadzha3.goldbrain.domain.facts.MemoryFactsExtractor
 import java.text.DateFormat
 import java.util.Date
 
@@ -48,6 +52,18 @@ fun MemoryDetailScreen(
                 memory.userNote
             )
         }
+    val facts =
+        remember(
+            memory.ocrText,
+            note
+        ) {
+            MemoryFactsExtractor
+                .extract(
+                    memory.ocrText,
+                    note
+                )
+        }
+
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
@@ -168,6 +184,20 @@ fun MemoryDetailScreen(
             )
         }
 
+        if (facts.isNotEmpty()) {
+            DetailSectionTitle(
+                title = stringResource(
+                    R.string.detail_facts
+                )
+            )
+
+            facts.forEach { fact ->
+                FactRow(
+                    fact = fact
+                )
+            }
+        }
+
         if (memory.labels.isNotBlank()) {
             DetailSection(
                 title = stringResource(
@@ -191,6 +221,75 @@ fun MemoryDetailScreen(
         )
     }
 }
+
+@Composable
+private fun FactRow(
+    fact: MemoryFact
+) {
+    Column(
+        verticalArrangement =
+            Arrangement.spacedBy(
+                2.dp
+            )
+    ) {
+        Text(
+            text =
+                factTypeLabel(
+                    fact.type
+                ),
+            style =
+                MaterialTheme
+                    .typography
+                    .labelMedium,
+            fontWeight =
+                FontWeight.SemiBold
+        )
+
+        Text(
+            text = fact.value,
+            style =
+                MaterialTheme
+                    .typography
+                    .bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun factTypeLabel(
+    type: MemoryFactType
+): String =
+    when (type) {
+        MemoryFactType.MONEY ->
+            stringResource(
+                R.string.fact_money
+            )
+
+        MemoryFactType.EMAIL ->
+            stringResource(
+                R.string.fact_email
+            )
+
+        MemoryFactType.PHONE ->
+            stringResource(
+                R.string.fact_phone
+            )
+
+        MemoryFactType.URL ->
+            stringResource(
+                R.string.fact_url
+            )
+
+        MemoryFactType.DATE ->
+            stringResource(
+                R.string.fact_date
+            )
+
+        MemoryFactType.ISBN ->
+            stringResource(
+                R.string.fact_isbn
+            )
+    }
 
 @Composable
 private fun DetailSectionTitle(
