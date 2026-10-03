@@ -7,6 +7,8 @@ import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.hadzha3.goldbrain.domain.facts.MemoryFactType
+import com.hadzha3.goldbrain.domain.facts.MemoryFactsExtractor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
@@ -167,13 +169,40 @@ class MlKitImageAnalyzer(
             append(labels.joinToString(" "))
         }.lowercase()
 
+        val facts =
+            MemoryFactsExtractor
+                .extract(
+                    text
+                )
+
         return when {
-            RECEIPT_MARKERS.any(source::contains) -> "Чек"
-            BOOK_MARKERS.any(source::contains) -> "Книга"
-            EVENT_MARKERS.any(source::contains) -> "Событие"
-            CONTACT_MARKERS.any(source::contains) -> "Контакт"
-            PARKING_MARKERS.any(source::contains) -> "Парковка"
-            else -> "Память"
+            RECEIPT_MARKERS.any(source::contains) ->
+                "Чек"
+
+            facts.any {
+                it.type ==
+                    MemoryFactType.ISBN
+            } ||
+                BOOK_MARKERS.any(source::contains) ->
+                "Книга"
+
+            EVENT_MARKERS.any(source::contains) ->
+                "Событие"
+
+            facts.any {
+                it.type ==
+                    MemoryFactType.EMAIL ||
+                    it.type ==
+                    MemoryFactType.PHONE
+            } ||
+                CONTACT_MARKERS.any(source::contains) ->
+                "Контакт"
+
+            PARKING_MARKERS.any(source::contains) ->
+                "Парковка"
+
+            else ->
+                "Память"
         }
     }
 
