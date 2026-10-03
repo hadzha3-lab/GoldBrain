@@ -28,14 +28,15 @@ class GalleryIndexWorker(
                 true
             )
 
-        return runCatching {
+        return try {
             if (isNewRun) {
                 val totalPending =
                     container.galleryIndexer
                         .pendingCount()
 
                 statusRepository.startRun(
-                    total = totalPending
+                    total =
+                        totalPending
                 )
             }
 
@@ -45,7 +46,7 @@ class GalleryIndexWorker(
                         .DEFAULT_VERIFICATION_BATCH
                 )
 
-            val result =
+            val batch =
                 container.galleryIndexer
                     .indexNextBatch(
                         GalleryIndexer
@@ -56,60 +57,60 @@ class GalleryIndexWorker(
                 Data.Builder()
                     .putInt(
                         KEY_INDEXED,
-                        result.indexed
+                        batch.indexed
                     )
                     .putInt(
                         KEY_FAILED,
-                        result.failed
+                        batch.failed
                     )
                     .putInt(
                         KEY_CANDIDATES,
-                        result.candidates
+                        batch.candidates
                     )
                     .build()
 
             if (
-                result.failed > 0 &&
-                result.indexed == 0
+                batch.failed > 0 &&
+                batch.indexed == 0
             ) {
-                statusRepository.markError(
-                    indexed =
-                        result.indexed,
-                    failed =
-                        result.failed
-                )
-
-                return@runCatching
-                    Result.failure(
-                        output
+                statusRepository
+                    .markError(
+                        indexed =
+                            batch.indexed,
+                        failed =
+                            batch.failed
                     )
-            }
 
-            val shouldContinue =
-                result.hasMore &&
-                    result.indexed > 0
-
-            statusRepository
-                .markBatchFinished(
-                    indexed =
-                        result.indexed,
-                    failed =
-                        result.failed,
-                    hasMore =
-                        shouldContinue
+                Result.failure(
+                    output
                 )
+            } else {
+                val shouldContinue =
+                    batch.hasMore &&
+                        batch.indexed > 0
 
-            if (shouldContinue) {
-                GalleryIndexScheduler
-                    .continueSoon(
-                        applicationContext
+                statusRepository
+                    .markBatchFinished(
+                        indexed =
+                            batch.indexed,
+                        failed =
+                            batch.failed,
+                        hasMore =
+                            shouldContinue
                     )
-            }
 
-            Result.success(
-                output
-            )
-        }.getOrElse {
+                if (shouldContinue) {
+                    GalleryIndexScheduler
+                        .continueSoon(
+                            applicationContext
+                        )
+                }
+
+                Result.success(
+                    output
+                )
+            }
+        } catch (_: Throwable) {
             statusRepository
                 .markError()
 
