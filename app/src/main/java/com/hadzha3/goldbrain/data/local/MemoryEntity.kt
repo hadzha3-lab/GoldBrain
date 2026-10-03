@@ -16,5 +16,7 @@ data class MemoryEntity(
     @ColumnInfo(defaultValue = "1")
     val isAvailable: Boolean = true,
     @ColumnInfo(defaultValue = "0")
-    val lastVerifiedAt: Long = 0L
+    val lastVerifiedAt: Long = 0L,
+    @ColumnInfo(defaultValue = "''")
+    val userNote: String = ""
 )
