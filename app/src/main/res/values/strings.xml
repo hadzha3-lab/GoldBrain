@@ -54,7 +54,7 @@
     <string name="settings_privacy_text">GoldBrain не копирует оригиналы фотографий. Локально сохраняются индекс, распознанный текст, категории и метки, необходимые для поиска.</string>
     <string name="settings_clear_index">Очистить локальный индекс</string>
     <string name="settings_clear_confirm_title">Очистить индекс?</string>
-    <string name="settings_clear_confirm_text">Будут удалены локальные результаты анализа и поиск начнёт с пустой базы. Оригиналы фотографий не удаляются. Фоновая индексация будет отключена.</string>
+    <string name="settings_clear_confirm_text">Будут удалены локальные результаты анализа и сохранённые разрешения Photo Picker. Оригиналы фотографий не удаляются. Фоновая индексация будет отключена.</string>
     <string name="settings_clear_confirm">Очистить</string>
     <string name="settings_cancel">Отмена</string>
 
