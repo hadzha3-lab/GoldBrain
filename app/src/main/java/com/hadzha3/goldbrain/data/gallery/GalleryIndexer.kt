@@ -78,7 +78,7 @@ class GalleryIndexer(
                 ) {
                     throw cancellation
                 } catch (
-                    error: Throwable
+                    error: Exception
                 ) {
                     failureRepository
                         .recordFailure(
