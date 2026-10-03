@@ -178,6 +178,19 @@ class HomeViewModel(
         selectedUri.value = null
     }
 
+    fun updateMemoryNote(
+        uri: String,
+        note: String
+    ) {
+        viewModelScope.launch {
+            repository
+                .updateUserNote(
+                    uri = uri,
+                    note = note
+                )
+        }
+    }
+
     fun indexSelected(
         uris: List<Uri>
     ) = viewModelScope.launch {
