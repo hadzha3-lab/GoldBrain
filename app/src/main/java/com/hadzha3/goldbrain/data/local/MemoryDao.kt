@@ -69,6 +69,14 @@ interface MemoryDao {
         note: String
     )
 
+    @Query(
+        "DELETE FROM memories " +
+            "WHERE uri = :uri"
+    )
+    suspend fun deleteByUri(
+        uri: String
+    )
+
     @Query("DELETE FROM memories")
     suspend fun clearAll()
 }
