@@ -6,6 +6,7 @@ import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.gallery.MediaStoreGalleryMediaSource
 import com.hadzha3.goldbrain.data.local.AppDatabase
 import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
+import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
 import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
@@ -13,7 +14,8 @@ import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 class AppContainer(
     context: Context
 ) {
-    private val appContext = context.applicationContext
+    private val appContext =
+        context.applicationContext
 
     private val database by lazy {
         AppDatabase.get(appContext)
@@ -28,7 +30,15 @@ class AppContainer(
     }
 
     private val mediaAccessChecker by lazy {
-        AndroidMediaAccessChecker(appContext)
+        AndroidMediaAccessChecker(
+            appContext
+        )
+    }
+
+    val indexingPreferences: IndexingPreferences by lazy {
+        IndexingPreferences(
+            appContext
+        )
     }
 
     val memoryRepository: MemoryRepository by lazy {
@@ -36,7 +46,8 @@ class AppContainer(
             dao = database.memoryDao(),
             imageAnalyzer = imageAnalyzer,
             searchEngine = searchEngine,
-            mediaAccessChecker = mediaAccessChecker
+            mediaAccessChecker =
+                mediaAccessChecker
         )
     }
 
@@ -47,13 +58,17 @@ class AppContainer(
     }
 
     private val galleryMediaSource by lazy {
-        MediaStoreGalleryMediaSource(appContext)
+        MediaStoreGalleryMediaSource(
+            appContext
+        )
     }
 
     val galleryIndexer: GalleryIndexer by lazy {
         GalleryIndexer(
-            repository = memoryRepository,
-            mediaSource = galleryMediaSource
+            repository =
+                memoryRepository,
+            mediaSource =
+                galleryMediaSource
         )
     }
 }
