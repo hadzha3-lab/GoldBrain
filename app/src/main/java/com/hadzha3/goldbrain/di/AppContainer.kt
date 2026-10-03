@@ -6,6 +6,7 @@ import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.gallery.MediaStoreGalleryMediaSource
 import com.hadzha3.goldbrain.data.local.AppDatabase
 import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
+import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
 import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
@@ -40,6 +41,13 @@ class AppContainer(
             appContext
         )
     }
+
+    val persistedMediaPermissionManager:
+        PersistedMediaPermissionManager by lazy {
+            PersistedMediaPermissionManager(
+                appContext
+            )
+        }
 
     val memoryRepository: MemoryRepository by lazy {
         MemoryRepository(
