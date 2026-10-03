@@ -30,6 +30,9 @@ class SettingsViewModel(
     private val indexStatusRepository =
         container.indexStatusRepository
 
+    private val indexFailureRepository =
+        container.indexFailureRepository
+
     private val accessMode =
         MutableStateFlow(
             MediaPermissions
@@ -90,11 +93,15 @@ class SettingsViewModel(
     val uiState =
         combine(
             coreState,
+            indexFailureRepository.count(),
             storageUsage
         ) {
                 state,
+                failedCount,
                 storage ->
             state.copy(
+                failedPhotoCount =
+                    failedCount,
                 indexBytes =
                     storage.indexBytes,
                 cacheBytes =
@@ -225,6 +232,26 @@ class SettingsViewModel(
             .startNow(
                 getApplication()
             )
+    }
+
+    fun retryFailedPhotos() {
+        if (
+            accessMode.value ==
+            GalleryAccessMode.NONE
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            container
+                .galleryIndexer
+                .retryFailures()
+
+            GalleryIndexScheduler
+                .startNow(
+                    getApplication()
+                )
+        }
     }
 
     fun recheckOriginals() {
