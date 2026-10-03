@@ -20,9 +20,21 @@ data class DetectedColor(
 class ColorClassifier {
     fun classify(
         samples: List<ColorSample>
-    ): DetectedColor? {
-        if (samples.isEmpty()) {
-            return null
+    ): DetectedColor? =
+        classifyTop(
+            samples = samples,
+            maxColors = 1
+        ).firstOrNull()
+
+    fun classifyTop(
+        samples: List<ColorSample>,
+        maxColors: Int = 2
+    ): List<DetectedColor> {
+        if (
+            samples.isEmpty() ||
+            maxColors <= 0
+        ) {
+            return emptyList()
         }
 
         val buckets =
@@ -47,47 +59,52 @@ class ColorClassifier {
 
         val chromatic =
             buckets
-                .filterKeys {
-                    it !in
+                .asSequence()
+                .filter {
+                    it.key !in
                         NEUTRAL_COLORS
                 }
-                .maxByOrNull {
+                .filter {
+                    it.value
+                        .toFloat() /
+                        total.toFloat() >=
+                        MIN_CHROMATIC_RATIO
+                }
+                .sortedByDescending {
                     it.value
                 }
+                .take(
+                    maxColors
+                )
+                .mapNotNull {
+                    COLORS[
+                        it.key
+                    ]
+                }
+                .toList()
 
         if (
-            chromatic != null &&
-            chromatic.value
-                .toFloat() /
-                total.toFloat() >=
-            MIN_CHROMATIC_RATIO
+            chromatic.isNotEmpty()
         ) {
-            return COLORS[
-                chromatic.key
-            ]
+            return chromatic
         }
 
-        val neutral =
-            buckets
-                .filterKeys {
-                    it in
-                        NEUTRAL_COLORS
-                }
-                .maxByOrNull {
-                    it.value
-                }
-
-        val winner =
-            neutral
-                ?: buckets
-                    .maxByOrNull {
-                        it.value
-                    }
-                ?: return null
-
-        return COLORS[
-            winner.key
-        ]
+        return buckets
+            .asSequence()
+            .filter {
+                it.key in
+                    NEUTRAL_COLORS
+            }
+            .sortedByDescending {
+                it.value
+            }
+            .take(1)
+            .mapNotNull {
+                COLORS[
+                    it.key
+                ]
+            }
+            .toList()
     }
 
     private fun classifySample(
