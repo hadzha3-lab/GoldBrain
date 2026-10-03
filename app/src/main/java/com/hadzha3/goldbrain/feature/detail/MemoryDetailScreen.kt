@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +42,12 @@ import java.util.Date
 @Composable
 fun MemoryDetailScreen(
     memory: MemoryEntity,
+    actionState: MemoryDetailActionState,
     onBack: () -> Unit,
     onOpenOriginal: () -> Unit,
-    onSaveNote: (String) -> Unit
+    onSaveNote: (String) -> Unit,
+    onReanalyze: () -> Unit,
+    onRemove: () -> Unit
 ) {
     var note by
         rememberSaveable(
@@ -50,6 +55,15 @@ fun MemoryDetailScreen(
         ) {
             mutableStateOf(
                 memory.userNote
+            )
+        }
+
+    var showRemoveConfirmation by
+        rememberSaveable(
+            memory.uri
+        ) {
+            mutableStateOf(
+                false
             )
         }
     val facts =
@@ -174,13 +188,68 @@ fun MemoryDetailScreen(
                 )
             },
             enabled =
-                note.trim() !=
-                    memory.userNote
+                !actionState.isBusy &&
+                    note.trim() !=
+                        memory.userNote
         ) {
             Text(
                 stringResource(
                     R.string.detail_note_save
                 )
+            )
+        }
+
+        DetailSectionTitle(
+            title = stringResource(
+                R.string.detail_management
+            )
+        )
+
+        OutlinedButton(
+            onClick = onReanalyze,
+            enabled =
+                memory.isAvailable &&
+                    !actionState.isBusy
+        ) {
+            Text(
+                stringResource(
+                    if (actionState.isBusy) {
+                        R.string.detail_reanalyzing
+                    } else {
+                        R.string.detail_reanalyze
+                    }
+                )
+            )
+        }
+
+        OutlinedButton(
+            onClick = {
+                showRemoveConfirmation =
+                    true
+            },
+            enabled =
+                !actionState.isBusy
+        ) {
+            Text(
+                stringResource(
+                    R.string.detail_remove_from_index
+                )
+            )
+        }
+
+        if (
+            actionState.message
+                .isNotBlank()
+        ) {
+            Text(
+                text =
+                    actionState.message,
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodySmall,
+                fontWeight =
+                    FontWeight.Medium
             )
         }
 
@@ -218,6 +287,58 @@ fun MemoryDetailScreen(
 
         Spacer(
             modifier = Modifier.size(24.dp)
+        )
+    }
+
+    if (showRemoveConfirmation) {
+        AlertDialog(
+            onDismissRequest = {
+                showRemoveConfirmation =
+                    false
+            },
+            title = {
+                Text(
+                    stringResource(
+                        R.string.detail_remove_confirm_title
+                    )
+                )
+            },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.detail_remove_confirm_text
+                    )
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRemoveConfirmation =
+                            false
+                        onRemove()
+                    }
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.detail_remove_confirm
+                        )
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showRemoveConfirmation =
+                            false
+                    }
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.settings_cancel
+                        )
+                    )
+                }
+            }
         )
     }
 }
