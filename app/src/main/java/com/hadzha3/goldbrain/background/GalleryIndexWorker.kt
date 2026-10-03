@@ -70,47 +70,30 @@ class GalleryIndexWorker(
                     )
                     .build()
 
-            if (
-                batch.failed > 0 &&
-                batch.indexed == 0
-            ) {
-                statusRepository
-                    .markError(
-                        indexed =
-                            batch.indexed,
-                        failed =
-                            batch.failed
-                    )
+            val shouldContinue =
+                batch.hasMore &&
+                    batch.candidates > 0
 
-                Result.failure(
-                    output
+            statusRepository
+                .markBatchFinished(
+                    indexed =
+                        batch.indexed,
+                    failed =
+                        batch.failed,
+                    hasMore =
+                        shouldContinue
                 )
-            } else {
-                val shouldContinue =
-                    batch.hasMore &&
-                        batch.indexed > 0
 
-                statusRepository
-                    .markBatchFinished(
-                        indexed =
-                            batch.indexed,
-                        failed =
-                            batch.failed,
-                        hasMore =
-                            shouldContinue
+            if (shouldContinue) {
+                GalleryIndexScheduler
+                    .continueSoon(
+                        applicationContext
                     )
-
-                if (shouldContinue) {
-                    GalleryIndexScheduler
-                        .continueSoon(
-                            applicationContext
-                        )
-                }
-
-                Result.success(
-                    output
-                )
             }
+
+            Result.success(
+                output
+            )
         } catch (
             cancellation:
                 CancellationException
