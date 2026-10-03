@@ -8,7 +8,10 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 object GalleryIndexScheduler {
@@ -110,6 +113,50 @@ object GalleryIndexScheduler {
         cancelActive(context)
         cancelPeriodic(context)
     }
+
+    suspend fun hasActiveIndexWork(
+        context: Context
+    ): Boolean =
+        withContext(
+            Dispatchers.IO
+        ) {
+            val manager =
+                WorkManager.getInstance(
+                    context
+                )
+
+            val oneTime =
+                runCatching {
+                    manager
+                        .getWorkInfosForUniqueWork(
+                            ONE_TIME_NAME
+                        )
+                        .get()
+                }.getOrDefault(
+                    emptyList()
+                )
+
+            val continuation =
+                runCatching {
+                    manager
+                        .getWorkInfosForUniqueWork(
+                            CONTINUATION_NAME
+                        )
+                        .get()
+                }.getOrDefault(
+                    emptyList()
+                )
+
+            (oneTime + continuation)
+                .any {
+                    it.state ==
+                        WorkInfo.State.ENQUEUED ||
+                        it.state ==
+                        WorkInfo.State.RUNNING ||
+                        it.state ==
+                        WorkInfo.State.BLOCKED
+                }
+        }
 
     private fun oneTimeRequest(
         delaySeconds: Long = 0,
