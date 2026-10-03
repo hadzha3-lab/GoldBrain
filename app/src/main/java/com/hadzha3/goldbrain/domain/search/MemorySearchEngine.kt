@@ -80,6 +80,7 @@ class MemorySearchEngine(
                     item.title,
                     item.ocrText,
                     item.labels,
+                    item.userNote,
                     item.searchableText
                 ).joinToString(" ")
             )
