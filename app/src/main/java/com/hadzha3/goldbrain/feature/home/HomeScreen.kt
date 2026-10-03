@@ -28,12 +28,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hadzha3.goldbrain.R
+import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.feature.home.components.MemoryCard
 
 @Composable
 fun HomeScreen(
     state: HomeUiState,
     onQueryChange: (String) -> Unit,
+    onMemoryClick: (MemoryEntity) -> Unit,
     onGalleryClick: () -> Unit,
     onCameraClick: () -> Unit,
     onPickPhotosClick: () -> Unit
@@ -132,7 +134,10 @@ fun HomeScreen(
                 )
             }
 
-            HomeContent(state)
+            HomeContent(
+                state = state,
+                onMemoryClick = onMemoryClick
+            )
         }
     }
 }
@@ -168,7 +173,8 @@ private fun HomeActions(
 
 @Composable
 private fun HomeContent(
-    state: HomeUiState
+    state: HomeUiState,
+    onMemoryClick: (MemoryEntity) -> Unit
 ) {
     if (state.memories.isEmpty()) {
         Box(
@@ -196,7 +202,12 @@ private fun HomeContent(
             items = state.memories,
             key = { it.uri }
         ) { memory ->
-            MemoryCard(memory)
+            MemoryCard(
+                item = memory,
+                onClick = {
+                    onMemoryClick(memory)
+                }
+            )
         }
     }
 }
