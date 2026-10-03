@@ -13,13 +13,9 @@ interface MemoryDao {
     @Query("SELECT * FROM memories ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<MemoryEntity>>
 
-    @Query("""
-        SELECT * FROM memories
-        WHERE searchableText LIKE '%' || :query || '%'
-        ORDER BY createdAt DESC
-    """)
-    fun search(query: String): Flow<List<MemoryEntity>>
-
     @Query("SELECT COUNT(*) FROM memories")
     fun count(): Flow<Int>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM memories WHERE uri = :uri LIMIT 1)")
+    suspend fun exists(uri: String): Boolean
 }
