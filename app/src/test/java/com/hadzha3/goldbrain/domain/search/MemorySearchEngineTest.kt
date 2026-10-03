@@ -270,6 +270,71 @@ class MemorySearchEngineTest {
     }
 
     @Test
+    fun phoneIntentFindsRawPhoneNumber() {
+        val contact =
+            memory(
+                uri = "contact",
+                text =
+                    "+7 (999) 123-45-67"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(contact),
+                "найди телефон"
+            )
+
+        assertEquals(
+            "contact",
+            result.first().uri
+        )
+    }
+
+    @Test
+    fun priceIntentCombinesObjectAndReceiptAmount() {
+        val headphones =
+            memory(
+                uri = "headphones-receipt",
+                text =
+                    "ИТОГО 19 990 ₽",
+                labels =
+                    "Headphones"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(headphones),
+                "сколько стоили наушники"
+            )
+
+        assertEquals(
+            "headphones-receipt",
+            result.first().uri
+        )
+    }
+
+    @Test
+    fun linkIntentFindsRawWebsite() {
+        val page =
+            memory(
+                uri = "website",
+                text =
+                    "www.example.com"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(page),
+                "покажи ссылку"
+            )
+
+        assertEquals(
+            "website",
+            result.first().uri
+        )
+    }
+
+    @Test
     fun russianKeyQueryMatchesEnglishLabel() {
         val key =
             memory(
