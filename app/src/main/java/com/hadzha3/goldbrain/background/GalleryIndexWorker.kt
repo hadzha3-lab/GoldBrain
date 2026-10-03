@@ -11,7 +11,10 @@ import com.hadzha3.goldbrain.data.repository.MemoryRepository
 class GalleryIndexWorker(
     appContext: Context,
     params: WorkerParameters
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(
+    appContext,
+    params
+) {
     override suspend fun doWork(): Result {
         val container =
             applicationContext.appContainer
@@ -19,63 +22,112 @@ class GalleryIndexWorker(
         val statusRepository =
             container.indexStatusRepository
 
+        val isNewRun =
+            inputData.getBoolean(
+                KEY_NEW_RUN,
+                true
+            )
+
         return runCatching {
-            statusRepository.markRunning()
+            if (isNewRun) {
+                val totalPending =
+                    container.galleryIndexer
+                        .pendingCount()
+
+                statusRepository.startRun(
+                    total = totalPending
+                )
+            }
 
             container.memoryRepository
                 .verifyAvailability(
-                    MemoryRepository.DEFAULT_VERIFICATION_BATCH
+                    MemoryRepository
+                        .DEFAULT_VERIFICATION_BATCH
                 )
 
             val result =
                 container.galleryIndexer
                     .indexNextBatch(
-                        GalleryIndexer.DEFAULT_BATCH_SIZE
+                        GalleryIndexer
+                            .DEFAULT_BATCH_SIZE
                     )
 
-            val output = Data.Builder()
-                .putInt(KEY_INDEXED, result.indexed)
-                .putInt(KEY_FAILED, result.failed)
-                .putInt(KEY_CANDIDATES, result.candidates)
-                .build()
+            val output =
+                Data.Builder()
+                    .putInt(
+                        KEY_INDEXED,
+                        result.indexed
+                    )
+                    .putInt(
+                        KEY_FAILED,
+                        result.failed
+                    )
+                    .putInt(
+                        KEY_CANDIDATES,
+                        result.candidates
+                    )
+                    .build()
 
             if (
                 result.failed > 0 &&
                 result.indexed == 0
             ) {
                 statusRepository.markError(
-                    indexed = result.indexed,
-                    failed = result.failed
+                    indexed =
+                        result.indexed,
+                    failed =
+                        result.failed
                 )
-                return@runCatching Result.failure(output)
+
+                return@runCatching
+                    Result.failure(
+                        output
+                    )
             }
 
             val shouldContinue =
                 result.hasMore &&
                     result.indexed > 0
 
-            statusRepository.markFinished(
-                indexed = result.indexed,
-                failed = result.failed,
-                hasMore = shouldContinue
-            )
+            statusRepository
+                .markBatchFinished(
+                    indexed =
+                        result.indexed,
+                    failed =
+                        result.failed,
+                    hasMore =
+                        shouldContinue
+                )
 
             if (shouldContinue) {
-                GalleryIndexScheduler.continueSoon(
-                    applicationContext
-                )
+                GalleryIndexScheduler
+                    .continueSoon(
+                        applicationContext
+                    )
             }
 
-            Result.success(output)
+            Result.success(
+                output
+            )
         }.getOrElse {
-            statusRepository.markError()
+            statusRepository
+                .markError()
+
             Result.retry()
         }
     }
 
     companion object {
-        const val KEY_INDEXED = "indexed"
-        const val KEY_FAILED = "failed"
-        const val KEY_CANDIDATES = "candidates"
+        const val KEY_NEW_RUN =
+            "new_run"
+
+        const val KEY_INDEXED =
+            "indexed"
+
+        const val KEY_FAILED =
+            "failed"
+
+        const val KEY_CANDIDATES =
+            "candidates"
     }
 }
