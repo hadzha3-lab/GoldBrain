@@ -1,6 +1,10 @@
 package com.hadzha3.goldbrain
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,13 +26,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,6 +45,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.hadzha3.goldbrain.data.MemoryEntity
@@ -79,6 +87,37 @@ private fun GoldBrainApp(
         viewModel.index(uris)
     }
 
+    val camera = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        result.data?.data?.let { uri ->
+            viewModel.index(listOf(uri))
+        }
+    }
+
+    val cameraPermission = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            camera.launch(Intent(context, CameraActivity::class.java))
+        }
+    }
+
+    val galleryPermissions = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        if (hasGalleryAccess(context)) {
+            viewModel.scheduleGalleryIndex()
+            viewModel.enablePeriodicGalleryIndex()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (hasGalleryAccess(context)) {
+            viewModel.enablePeriodicGalleryIndex()
+        }
+    }
+
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -89,7 +128,7 @@ private fun GoldBrainApp(
                         )
                     )
                 },
-                text = { Text("Запомнить фото") },
+                text = { Text("Выбрать фото") },
                 icon = { Text("＋") }
             )
         }
@@ -110,8 +149,54 @@ private fun GoldBrainApp(
             )
 
             Text(
-                text = "$count воспоминаний · оригиналы остаются в галерее",
+                text = "${count} воспоминаний · оригиналы остаются в галерее",
                 style = MaterialTheme.typography.bodyMedium
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (hasGalleryAccess(context)) {
+                            viewModel.scheduleGalleryIndex()
+                            viewModel.enablePeriodicGalleryIndex()
+                        } else {
+                            galleryPermissions.launch(
+                                requiredGalleryPermissions()
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Галерея")
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        if (
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            camera.launch(
+                                Intent(context, CameraActivity::class.java)
+                            )
+                        } else {
+                            cameraPermission.launch(Manifest.permission.CAMERA)
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Камера")
+                }
+            }
+
+            Text(
+                text = "«Галерея» индексирует только те фото, к которым Android дал приложению доступ.",
+                style = MaterialTheme.typography.bodySmall
             )
 
             OutlinedTextField(
@@ -120,7 +205,9 @@ private fun GoldBrainApp(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 label = { Text("Что ты хочешь найти?") },
-                placeholder = { Text("Например: чек, книга, машина…") }
+                placeholder = {
+                    Text("Например: найди чек от наушников")
+                }
             )
 
             if (indexing || progress.isNotBlank()) {
@@ -137,7 +224,7 @@ private fun GoldBrainApp(
                 ) {
                     Text(
                         if (query.isBlank()) {
-                            "Добавь несколько фото — GoldBrain извлечёт текст и смысл."
+                            "Дай доступ к галерее, сделай снимок или выбери несколько фото."
                         } else {
                             "Ничего не найдено"
                         }
@@ -157,6 +244,44 @@ private fun GoldBrainApp(
                 }
             }
         }
+    }
+}
+
+private fun requiredGalleryPermissions(): Array<String> =
+    when {
+        Build.VERSION.SDK_INT >= 34 -> arrayOf(
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+        )
+
+        Build.VERSION.SDK_INT >= 33 -> arrayOf(
+            Manifest.permission.READ_MEDIA_IMAGES
+        )
+
+        else -> arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+    }
+
+private fun hasGalleryAccess(
+    context: Context
+): Boolean {
+    fun granted(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(
+            context,
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+
+    return when {
+        Build.VERSION.SDK_INT >= 34 ->
+            granted(Manifest.permission.READ_MEDIA_IMAGES) ||
+                granted(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
+        Build.VERSION.SDK_INT >= 33 ->
+            granted(Manifest.permission.READ_MEDIA_IMAGES)
+
+        else ->
+            granted(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
 }
 
