@@ -2,8 +2,11 @@ package com.hadzha3.goldbrain.domain.search
 
 import com.hadzha3.goldbrain.data.local.MemoryEntity
 import java.text.Normalizer
+import java.util.Calendar
 
-class MemorySearchEngine {
+class MemorySearchEngine(
+    private val nowProvider: () -> Long = System::currentTimeMillis
+) {
     fun search(
         items: List<MemoryEntity>,
         query: String
@@ -11,27 +14,55 @@ class MemorySearchEngine {
         val normalizedQuery = normalize(query)
         if (normalizedQuery.isBlank()) return items
 
+        val temporalFilter =
+            buildTemporalFilter(normalizedQuery)
+
         val words = normalizedQuery
             .split(WHITESPACE)
             .asSequence()
             .map(String::trim)
             .filter { it.length >= MIN_TERM_LENGTH }
             .filterNot(STOP_WORDS::contains)
+            .filterNot(TEMPORAL_WORDS::contains)
             .distinct()
             .toList()
 
-        if (words.isEmpty()) return items
+        val dateFiltered =
+            if (temporalFilter == null) {
+                items
+            } else {
+                items.filter { item ->
+                    item.createdAt in temporalFilter
+                }
+            }
 
-        return items
+        if (words.isEmpty()) {
+            return dateFiltered
+                .sortedByDescending {
+                    it.createdAt
+                }
+        }
+
+        return dateFiltered
             .mapNotNull { item ->
-                score(item, normalizedQuery, words)
-                    ?.let { score -> item to score }
+                score(
+                    item = item,
+                    normalizedQuery = normalizedQuery,
+                    words = words
+                )?.let { score ->
+                    item to score
+                }
             }
             .sortedWith(
-                compareByDescending<Pair<MemoryEntity, Int>> { it.second }
-                    .thenByDescending { it.first.createdAt }
+                compareByDescending<Pair<MemoryEntity, Int>> {
+                    it.second
+                }.thenByDescending {
+                    it.first.createdAt
+                }
             )
-            .map { it.first }
+            .map {
+                it.first
+            }
     }
 
     private fun score(
@@ -39,30 +70,56 @@ class MemorySearchEngine {
         normalizedQuery: String,
         words: List<String>
     ): Int? {
-        val category = normalize(item.category)
-        val haystack = normalize(
-            listOf(
-                item.category,
-                item.title,
-                item.ocrText,
-                item.labels,
-                item.searchableText
-            ).joinToString(" ")
-        )
+        val category =
+            normalize(item.category)
+
+        val haystack =
+            normalize(
+                listOf(
+                    item.category,
+                    item.title,
+                    item.ocrText,
+                    item.labels,
+                    item.searchableText
+                ).joinToString(" ")
+            )
 
         val hits = words.count { term ->
-            matches(haystack, term)
+            matches(
+                haystack = haystack,
+                term = term
+            )
         }
 
         if (hits == 0) return null
 
         val exactPhraseBonus =
-            if (haystack.contains(normalizedQuery)) EXACT_PHRASE_BONUS else 0
+            if (
+                words.size > 1 &&
+                haystack.contains(normalizedQuery)
+            ) {
+                EXACT_PHRASE_BONUS
+            } else {
+                0
+            }
 
         val categoryBonus =
-            if (words.any { matches(category, it) }) CATEGORY_BONUS else 0
+            if (
+                words.any { term ->
+                    matches(
+                        haystack = category,
+                        term = term
+                    )
+                }
+            ) {
+                CATEGORY_BONUS
+            } else {
+                0
+            }
 
-        return hits * TERM_SCORE + exactPhraseBonus + categoryBonus
+        return hits * TERM_SCORE +
+            exactPhraseBonus +
+            categoryBonus
     }
 
     private fun matches(
@@ -70,7 +127,237 @@ class MemorySearchEngine {
         term: String
     ): Boolean =
         haystack.contains(term) ||
-            SYNONYMS[term].orEmpty().any(haystack::contains)
+            SYNONYMS[term]
+                .orEmpty()
+                .any(haystack::contains)
+
+    private fun buildTemporalFilter(
+        query: String
+    ): LongRange? {
+        val now =
+            nowProvider()
+
+        return when {
+            containsAny(
+                query,
+                "позавчера",
+                "day before yesterday"
+            ) -> dayRange(
+                now = now,
+                daysAgo = 2
+            )
+
+            containsAny(
+                query,
+                "вчера",
+                "yesterday"
+            ) -> dayRange(
+                now = now,
+                daysAgo = 1
+            )
+
+            containsAny(
+                query,
+                "сегодня",
+                "today"
+            ) -> dayRange(
+                now = now,
+                daysAgo = 0
+            )
+
+            containsAny(
+                query,
+                "на этой неделе",
+                "эта неделя",
+                "this week"
+            ) -> currentWeekRange(now)
+
+            containsAny(
+                query,
+                "в этом месяце",
+                "этот месяц",
+                "this month"
+            ) -> currentMonthRange(now)
+
+            containsAny(
+                query,
+                "летом",
+                "summer"
+            ) -> mostRecentSummerRange(now)
+
+            else -> null
+        }
+    }
+
+    private fun dayRange(
+        now: Long,
+        daysAgo: Int
+    ): LongRange {
+        val start =
+            calendarAtStartOfDay(now).apply {
+                add(
+                    Calendar.DAY_OF_YEAR,
+                    -daysAgo
+                )
+            }
+
+        val end =
+            start.clone() as Calendar
+
+        end.add(
+            Calendar.DAY_OF_YEAR,
+            1
+        )
+
+        return start.timeInMillis until
+            end.timeInMillis
+    }
+
+    private fun currentWeekRange(
+        now: Long
+    ): LongRange {
+        val start =
+            calendarAtStartOfDay(now)
+
+        val dayOfWeek =
+            start.get(
+                Calendar.DAY_OF_WEEK
+            )
+
+        val deltaFromMonday =
+            (dayOfWeek -
+                Calendar.MONDAY +
+                DAYS_IN_WEEK) %
+                DAYS_IN_WEEK
+
+        start.add(
+            Calendar.DAY_OF_YEAR,
+            -deltaFromMonday
+        )
+
+        val end =
+            start.clone() as Calendar
+
+        end.add(
+            Calendar.DAY_OF_YEAR,
+            DAYS_IN_WEEK
+        )
+
+        return start.timeInMillis until
+            end.timeInMillis
+    }
+
+    private fun currentMonthRange(
+        now: Long
+    ): LongRange {
+        val start =
+            calendarAtStartOfDay(now)
+
+        start.set(
+            Calendar.DAY_OF_MONTH,
+            1
+        )
+
+        val end =
+            start.clone() as Calendar
+
+        end.add(
+            Calendar.MONTH,
+            1
+        )
+
+        return start.timeInMillis until
+            end.timeInMillis
+    }
+
+    private fun mostRecentSummerRange(
+        now: Long
+    ): LongRange {
+        val current =
+            calendarAtStartOfDay(now)
+
+        val currentMonth =
+            current.get(
+                Calendar.MONTH
+            )
+
+        val summerYear =
+            if (
+                currentMonth <
+                Calendar.JUNE
+            ) {
+                current.get(
+                    Calendar.YEAR
+                ) - 1
+            } else {
+                current.get(
+                    Calendar.YEAR
+                )
+            }
+
+        val start =
+            Calendar.getInstance()
+                .apply {
+                    clear()
+                    set(
+                        summerYear,
+                        Calendar.JUNE,
+                        1,
+                        0,
+                        0,
+                        0
+                    )
+                }
+
+        val end =
+            Calendar.getInstance()
+                .apply {
+                    clear()
+                    set(
+                        summerYear,
+                        Calendar.SEPTEMBER,
+                        1,
+                        0,
+                        0,
+                        0
+                    )
+                }
+
+        return start.timeInMillis until
+            end.timeInMillis
+    }
+
+    private fun calendarAtStartOfDay(
+        time: Long
+    ): Calendar =
+        Calendar.getInstance()
+            .apply {
+                timeInMillis = time
+                set(
+                    Calendar.HOUR_OF_DAY,
+                    0
+                )
+                set(
+                    Calendar.MINUTE,
+                    0
+                )
+                set(
+                    Calendar.SECOND,
+                    0
+                )
+                set(
+                    Calendar.MILLISECOND,
+                    0
+                )
+            }
+
+    private fun containsAny(
+        value: String,
+        vararg variants: String
+    ): Boolean =
+        variants.any(
+            value::contains
+        )
 
     private fun normalize(
         value: String
@@ -80,7 +367,14 @@ class MemorySearchEngine {
             Normalizer.Form.NFKC
         )
             .replace('ё', 'е')
-            .replace(NON_SEARCHABLE, " ")
+            .replace(
+                NON_SEARCHABLE,
+                " "
+            )
+            .replace(
+                WHITESPACE,
+                " "
+            )
             .trim()
 
     private companion object {
@@ -88,25 +382,144 @@ class MemorySearchEngine {
         const val TERM_SCORE = 5
         const val EXACT_PHRASE_BONUS = 10
         const val CATEGORY_BONUS = 3
+        const val DAYS_IN_WEEK = 7
 
-        val WHITESPACE = Regex("\\s+")
-        val NON_SEARCHABLE = Regex("[^\\p{L}\\p{N}@._-]+")
+        val WHITESPACE =
+            Regex("\\s+")
+
+        val NON_SEARCHABLE =
+            Regex(
+                "[^\\p{L}\\p{N}@._-]+"
+            )
 
         val STOP_WORDS = setOf(
-            "найди", "найти", "покажи", "фото", "фотку", "фотографию",
-            "мне", "мой", "моя", "мою", "который", "которую", "где",
-            "из", "от", "на", "в", "и", "the", "a", "an", "find", "show"
+            "найди",
+            "найти",
+            "покажи",
+            "фото",
+            "фотку",
+            "фотографию",
+            "фотографировал",
+            "фотографировала",
+            "снимал",
+            "снимала",
+            "мне",
+            "мой",
+            "моя",
+            "мою",
+            "как",
+            "называлась",
+            "назывался",
+            "который",
+            "которую",
+            "где",
+            "из",
+            "от",
+            "на",
+            "в",
+            "во",
+            "и",
+            "я",
+            "the",
+            "a",
+            "an",
+            "find",
+            "show",
+            "photo",
+            "picture"
+        )
+
+        val TEMPORAL_WORDS = setOf(
+            "сегодня",
+            "вчера",
+            "позавчера",
+            "летом",
+            "неделе",
+            "неделя",
+            "месяце",
+            "месяц",
+            "этой",
+            "этом",
+            "этот",
+            "today",
+            "yesterday",
+            "summer",
+            "week",
+            "month",
+            "this",
+            "day",
+            "before"
         )
 
         val SYNONYMS = mapOf(
-            "чек" to listOf("receipt", "invoice", "total", "итого"),
-            "квитанция" to listOf("receipt", "invoice", "чек"),
-            "машина" to listOf("car", "vehicle", "авто"),
-            "авто" to listOf("car", "vehicle", "машина"),
-            "парковка" to listOf("parking", "car", "vehicle"),
-            "книга" to listOf("book", "isbn", "publisher"),
-            "билет" to listOf("ticket", "admission", "event"),
-            "контакт" to listOf("email", "phone", "tel", "linkedin")
+            "чек" to listOf(
+                "receipt",
+                "invoice",
+                "total",
+                "итого"
+            ),
+            "квитанция" to listOf(
+                "receipt",
+                "invoice",
+                "чек"
+            ),
+            "машина" to listOf(
+                "car",
+                "vehicle",
+                "авто"
+            ),
+            "авто" to listOf(
+                "car",
+                "vehicle",
+                "машина"
+            ),
+            "парковка" to listOf(
+                "parking",
+                "car",
+                "vehicle"
+            ),
+            "парковался" to listOf(
+                "парковка",
+                "parking",
+                "car",
+                "vehicle"
+            ),
+            "парковала" to listOf(
+                "парковка",
+                "parking",
+                "car",
+                "vehicle"
+            ),
+            "книга" to listOf(
+                "book",
+                "isbn",
+                "publisher"
+            ),
+            "билет" to listOf(
+                "ticket",
+                "admission",
+                "event"
+            ),
+            "контакт" to listOf(
+                "email",
+                "phone",
+                "tel",
+                "linkedin"
+            ),
+            "ключ" to listOf(
+                "key",
+                "keys"
+            ),
+            "ключи" to listOf(
+                "key",
+                "keys"
+            ),
+            "наушники" to listOf(
+                "headphones",
+                "earphones",
+                "earbuds",
+                "headset"
+            )
         )
     }
 }
