@@ -19,7 +19,10 @@ class MemoryRepository(
         query: String
     ): Flow<List<MemoryEntity>> =
         dao.observeAll().map { items ->
-            searchEngine.search(items, query)
+            searchEngine.search(
+                items,
+                query
+            )
         }
 
     fun memory(
@@ -30,34 +33,49 @@ class MemoryRepository(
     fun count(): Flow<Int> =
         dao.count()
 
+    fun unavailableCount(): Flow<Int> =
+        dao.unavailableCount()
+
     suspend fun indexedUris(): Set<String> =
         dao.allUris().toHashSet()
 
     suspend fun index(
         uri: Uri,
-        createdAt: Long = System.currentTimeMillis()
+        createdAt: Long =
+            System.currentTimeMillis()
     ) {
-        val analysis = imageAnalyzer.analyze(uri)
-        val searchableText = listOf(
-            analysis.title,
-            analysis.category,
-            analysis.text,
-            analysis.labels.joinToString(" ")
-        )
-            .joinToString("\n")
-            .lowercase()
+        val analysis =
+            imageAnalyzer.analyze(uri)
 
-        val now = System.currentTimeMillis()
+        val searchableText =
+            listOf(
+                analysis.title,
+                analysis.category,
+                analysis.text,
+                analysis.labels
+                    .joinToString(" ")
+            )
+                .joinToString("\n")
+                .lowercase()
+
+        val now =
+            System.currentTimeMillis()
 
         dao.upsert(
             MemoryEntity(
                 uri = uri.toString(),
                 createdAt = createdAt,
-                category = analysis.category,
-                title = analysis.title,
-                ocrText = analysis.text,
-                labels = analysis.labels.joinToString(", "),
-                searchableText = searchableText,
+                category =
+                    analysis.category,
+                title =
+                    analysis.title,
+                ocrText =
+                    analysis.text,
+                labels =
+                    analysis.labels
+                        .joinToString(", "),
+                searchableText =
+                    searchableText,
                 isAvailable = true,
                 lastVerifiedAt = now
             )
@@ -65,26 +83,37 @@ class MemoryRepository(
     }
 
     suspend fun verifyAvailability(
-        limit: Int = DEFAULT_VERIFICATION_BATCH
+        limit: Int =
+            DEFAULT_VERIFICATION_BATCH
     ) {
-        val now = System.currentTimeMillis()
+        val now =
+            System.currentTimeMillis()
 
         dao.urisForVerification(limit)
             .forEach { uriString ->
                 val available =
-                    mediaAccessChecker.isAvailable(
-                        Uri.parse(uriString)
-                    )
+                    mediaAccessChecker
+                        .isAvailable(
+                            Uri.parse(
+                                uriString
+                            )
+                        )
 
                 dao.updateAvailability(
                     uri = uriString,
-                    available = available,
+                    available =
+                        available,
                     verifiedAt = now
                 )
             }
     }
 
+    suspend fun clearIndex() {
+        dao.clearAll()
+    }
+
     companion object {
-        const val DEFAULT_VERIFICATION_BATCH = 25
+        const val DEFAULT_VERIFICATION_BATCH =
+            25
     }
 }
