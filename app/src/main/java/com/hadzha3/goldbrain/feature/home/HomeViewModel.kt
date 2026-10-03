@@ -8,6 +8,7 @@ import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.data.local.MemoryEntity
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -19,11 +20,17 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     app: Application
 ) : AndroidViewModel(app) {
+    private val container =
+        app.appContainer
+
     private val repository =
-        app.appContainer.memoryRepository
+        container.memoryRepository
 
     private val indexStatusRepository =
-        app.appContainer.indexStatusRepository
+        container.indexStatusRepository
+
+    private val preferences =
+        container.indexingPreferences
 
     private val query =
         MutableStateFlow("")
@@ -53,7 +60,8 @@ class HomeViewModel(
             localIndexing,
             backgroundStatus
         ) { local, background ->
-            local || background.isRunning
+            local ||
+                background.isRunning
         }
 
     private val displayStatus =
@@ -64,6 +72,15 @@ class HomeViewModel(
             when {
                 local.isNotBlank() ->
                     local
+
+                background.isRunning &&
+                    background.totalInRun > 0 ->
+                    getApplication<Application>()
+                        .getString(
+                            R.string.index_background_progress,
+                            background.processedInRun,
+                            background.totalInRun
+                        )
 
                 background.isRunning ->
                     getApplication<Application>()
@@ -94,7 +111,12 @@ class HomeViewModel(
         query,
         indexingState,
         displayStatus
-    ) { items, count, currentQuery, indexing, status ->
+    ) {
+            items,
+            count,
+            currentQuery,
+            indexing,
+            status ->
         HomeUiState(
             memories = items,
             memoryCount = count,
@@ -104,7 +126,10 @@ class HomeViewModel(
         )
     }.stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
+        SharingStarted
+            .WhileSubscribed(
+                5_000
+            ),
         HomeUiState()
     )
 
@@ -112,20 +137,28 @@ class HomeViewModel(
         selectedUri
             .flatMapLatest { uri ->
                 if (uri == null) {
-                    flowOf<MemoryEntity?>(null)
+                    flowOf<MemoryEntity?>(
+                        null
+                    )
                 } else {
-                    repository.memory(uri)
+                    repository.memory(
+                        uri
+                    )
                 }
             }
             .stateIn(
                 viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
+                SharingStarted
+                    .WhileSubscribed(
+                        5_000
+                    ),
                 null
             )
 
     init {
         viewModelScope.launch {
-            repository.verifyAvailability()
+            repository
+                .verifyAvailability()
         }
     }
 
@@ -148,12 +181,18 @@ class HomeViewModel(
     fun indexSelected(
         uris: List<Uri>
     ) = viewModelScope.launch {
-        if (uris.isEmpty()) return@launch
+        if (uris.isEmpty()) {
+            return@launch
+        }
 
-        localIndexing.value = true
+        localIndexing.value =
+            true
+
         var failed = 0
 
-        uris.forEachIndexed { index, uri ->
+        uris.forEachIndexed {
+                index,
+                uri ->
             localStatus.value =
                 getApplication<Application>()
                     .getString(
@@ -163,13 +202,15 @@ class HomeViewModel(
                     )
 
             runCatching {
-                repository.index(uri)
+                repository.index(
+                    uri
+                )
             }.onFailure {
                 failed++
             }
         }
 
-        localStatus.value =
+        val finalStatus =
             if (failed == 0) {
                 getApplication<Application>()
                     .getString(
@@ -183,20 +224,52 @@ class HomeViewModel(
                     )
             }
 
-        localIndexing.value = false
+        localStatus.value =
+            finalStatus
+
+        localIndexing.value =
+            false
+
+        delay(
+            LOCAL_STATUS_DURATION_MS
+        )
+
+        if (
+            localStatus.value ==
+            finalStatus
+        ) {
+            localStatus.value = ""
+        }
     }
 
     fun startGalleryIndex() {
         localStatus.value = ""
 
-        GalleryIndexScheduler.startNow(
-            getApplication()
-        )
+        GalleryIndexScheduler
+            .startNow(
+                getApplication()
+            )
     }
 
     fun enablePeriodicGalleryIndex() {
-        GalleryIndexScheduler.ensurePeriodic(
-            getApplication()
-        )
+        if (
+            preferences
+                .autoIndexEnabled
+        ) {
+            GalleryIndexScheduler
+                .ensurePeriodic(
+                    getApplication()
+                )
+        } else {
+            GalleryIndexScheduler
+                .cancelPeriodic(
+                    getApplication()
+                )
+        }
+    }
+
+    private companion object {
+        const val LOCAL_STATUS_DURATION_MS =
+            2_500L
     }
 }
