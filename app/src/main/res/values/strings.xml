@@ -46,9 +46,12 @@
     <string name="settings_index_title">Локальный индекс</string>
     <string name="settings_memory_count">В индексе: %1$d</string>
     <string name="settings_unavailable_count">Оригиналов недоступно: %1$d</string>
+    <string name="settings_index_size">Размер индекса: %1$s</string>
+    <string name="settings_cache_size">Временный кэш: %1$s</string>
     <string name="settings_index_progress">Добавлено: %1$d из %2$d · ошибок: %3$d</string>
     <string name="settings_index_now">Индексировать сейчас</string>
     <string name="settings_recheck">Проверить доступность оригиналов</string>
+    <string name="settings_clear_cache">Очистить временный кэш</string>
 
     <string name="settings_privacy_title">Хранение и приватность</string>
     <string name="settings_privacy_text">GoldBrain не копирует оригиналы фотографий. Локально сохраняются индекс, распознанный текст, категории и метки, необходимые для поиска.</string>
