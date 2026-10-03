@@ -174,6 +174,80 @@ class MemorySearchEngineTest {
     }
 
     @Test
+    fun redCarQueryMatchesEnglishVisualLabels() {
+        val car =
+            memory(
+                uri = "red-car",
+                labels = "Car, Red"
+            )
+
+        val other =
+            memory(
+                uri = "blue-book",
+                labels = "Book, Blue"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(
+                    other,
+                    car
+                ),
+                "красная машина"
+            )
+
+        assertEquals(
+            listOf("red-car"),
+            result.map {
+                it.uri
+            }
+        )
+    }
+
+    @Test
+    fun blueHeadphonesQueryHandlesRussianCases() {
+        val headphones =
+            memory(
+                uri = "headphones",
+                labels =
+                    "Headphones, Blue"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(
+                    headphones
+                ),
+                "найди синие наушники"
+            )
+
+        assertEquals(
+            "headphones",
+            result.first().uri
+        )
+    }
+
+    @Test
+    fun whiteBookQueryMatchesInflectedRussianWords() {
+        val book =
+            memory(
+                uri = "white-book",
+                labels = "Book, White"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(book),
+                "покажи белую книгу"
+            )
+
+        assertEquals(
+            "white-book",
+            result.first().uri
+        )
+    }
+
+    @Test
     fun russianKeyQueryMatchesEnglishLabel() {
         val key =
             memory(
