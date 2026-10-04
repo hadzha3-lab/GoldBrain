@@ -8,7 +8,6 @@ import android.provider.OpenableColumns
 import com.hadzha3.goldbrain.domain.source.PhotoSourceClassification
 import com.hadzha3.goldbrain.domain.source.PhotoSourceClassifier
 import com.hadzha3.goldbrain.domain.source.PhotoSourceMetadata
-import com.hadzha3.goldbrain.domain.source.PhotoSourceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
