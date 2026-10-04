@@ -5,14 +5,23 @@ object SupplementalOcrHeuristics {
         primaryText: String,
         labels: List<String>
     ): Boolean {
+        val compactChars =
+            primaryText.count {
+                !it.isWhitespace()
+            }
+
+        val cyrillicChars =
+            primaryText.count {
+                it in 'А'..'я' ||
+                    it == 'Ё' ||
+                    it == 'ё'
+            }
+
         if (
-            primaryText
-                .count {
-                    !it.isWhitespace()
-                } >=
-            MIN_PRIMARY_TEXT_CHARS
+            cyrillicChars >=
+            MIN_USEFUL_CYRILLIC_CHARS
         ) {
-            return true
+            return false
         }
 
         val labelText =
@@ -20,14 +29,25 @@ object SupplementalOcrHeuristics {
                 .joinToString(" ")
                 .lowercase()
 
-        return TEXT_LIKE_LABELS
-            .any(
-                labelText::contains
-            )
+        val looksTextHeavy =
+            TEXT_LIKE_LABELS
+                .any(
+                    labelText::contains
+                )
+
+        if (looksTextHeavy) {
+            return true
+        }
+
+        return compactChars >=
+            MIN_PRIMARY_TEXT_FOR_FALLBACK
     }
 
-    private const val MIN_PRIMARY_TEXT_CHARS =
-        3
+    private const val MIN_PRIMARY_TEXT_FOR_FALLBACK =
+        40
+
+    private const val MIN_USEFUL_CYRILLIC_CHARS =
+        40
 
     private val TEXT_LIKE_LABELS =
         listOf(
