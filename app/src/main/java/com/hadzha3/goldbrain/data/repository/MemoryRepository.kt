@@ -173,10 +173,6 @@ class MemoryRepository(
         var best =
             emptyList<MemoryEntity>()
 
-        var beforeCreatedAt:
-            Long? =
-            null
-
         var beforeUri:
             String? =
             null
@@ -187,7 +183,6 @@ class MemoryRepository(
 
             val page =
                 if (
-                    beforeCreatedAt == null ||
                     beforeUri == null
                 ) {
                     dao.firstSearchPage(
@@ -196,8 +191,6 @@ class MemoryRepository(
                     )
                 } else {
                     dao.searchPageBefore(
-                        beforeCreatedAt =
-                            beforeCreatedAt,
                         beforeUri =
                             beforeUri,
                         limit =
@@ -217,9 +210,6 @@ class MemoryRepository(
 
             val last =
                 page.last()
-
-            beforeCreatedAt =
-                last.createdAt
 
             beforeUri =
                 last.uri
