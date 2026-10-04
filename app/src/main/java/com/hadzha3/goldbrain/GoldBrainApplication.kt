@@ -5,6 +5,7 @@ import android.content.Context
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import com.hadzha3.goldbrain.di.AppContainer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,10 +30,17 @@ class GoldBrainApplication :
             AppContainer(this)
 
         applicationScope.launch {
-            runCatching {
+            try {
                 container
                     .indexRecoveryCoordinator
                     .recover()
+            } catch (
+                cancellation:
+                    CancellationException
+            ) {
+                throw cancellation
+            } catch (_: Exception) {
+                // Recovery is best-effort; normal app startup continues.
             }
         }
     }
