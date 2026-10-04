@@ -89,19 +89,9 @@ object MediaPermissions {
             GalleryAccessMode.NONE
 
     fun requiredCameraPermissions(): Array<String> =
-        if (
-            Build.VERSION.SDK_INT <=
-            Build.VERSION_CODES.P
-        ) {
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.CAMERA
-            )
-        }
+        arrayOf(
+            Manifest.permission.CAMERA
+        )
 
     fun hasCameraHardware(
         context: Context
