@@ -12,9 +12,6 @@ interface MemoryDao {
         item: MemoryEntity
     )
 
-    @Query("SELECT * FROM memories ORDER BY createdAt DESC")
-    fun observeAll(): Flow<List<MemoryEntity>>
-
     @Query(
         "SELECT * FROM memories " +
             "ORDER BY createdAt DESC, uri DESC " +
