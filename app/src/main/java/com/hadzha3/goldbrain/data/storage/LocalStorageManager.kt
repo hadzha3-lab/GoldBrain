@@ -10,27 +10,28 @@ data class LocalStorageUsage(
 )
 
 class LocalStorageManager(
-    private val context: Context
+    private val context: Context,
+    private val database: AppDatabase
 ) {
     fun usage(): LocalStorageUsage {
-        val database =
+        val databaseFile =
             context.getDatabasePath(
                 AppDatabase.DATABASE_NAME
             )
 
         val indexBytes =
             listOf(
-                database,
+                databaseFile,
                 File(
-                    database.path +
+                    databaseFile.path +
                         "-wal"
                 ),
                 File(
-                    database.path +
+                    databaseFile.path +
                         "-shm"
                 ),
                 File(
-                    database.path +
+                    databaseFile.path +
                         "-journal"
                 )
             ).sumOf(
@@ -45,6 +46,15 @@ class LocalStorageManager(
                     context.cacheDir
                 )
         )
+    }
+
+    fun optimizeIndex() {
+        database
+            .openHelper
+            .writableDatabase
+            .execSQL(
+                "VACUUM"
+            )
     }
 
     fun clearTemporaryCache() {
