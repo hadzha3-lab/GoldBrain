@@ -75,6 +75,33 @@ interface MemoryDao {
         verifiedAt: Long
     )
 
+    @Query(
+        """
+        SELECT uri FROM memories
+        WHERE sourceType = 'UNKNOWN'
+          AND isAvailable = 1
+        ORDER BY lastVerifiedAt ASC
+        LIMIT :limit
+        """
+    )
+    suspend fun unknownSourceUris(
+        limit: Int
+    ): List<String>
+
+    @Query(
+        """
+        UPDATE memories
+        SET sourceType = :sourceType,
+            sourceConfidence = :sourceConfidence
+        WHERE uri = :uri
+        """
+    )
+    suspend fun updateSource(
+        uri: String,
+        sourceType: String,
+        sourceConfidence: Int
+    )
+
     @Query("""
         SELECT userNote FROM memories
         WHERE uri = :uri
