@@ -68,6 +68,8 @@ class MemoryRepository(
         source:
             PhotoSourceClassification? =
             null
+    ) = withContext(
+        Dispatchers.Default
     ) {
         val existingNote =
             dao.userNote(
