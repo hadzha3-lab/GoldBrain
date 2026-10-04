@@ -50,6 +50,9 @@ class MemorySearchEngine(
                 .sortedByDescending {
                     it.createdAt
                 }
+                .take(
+                    MAX_SEARCH_RESULTS
+                )
         }
 
         return dateFiltered
@@ -72,6 +75,9 @@ class MemorySearchEngine(
             .map {
                 it.first
             }
+            .take(
+                MAX_SEARCH_RESULTS
+            )
     }
 
     private fun score(
@@ -504,6 +510,7 @@ class MemorySearchEngine(
         const val FACT_BONUS = 4
         const val DAYS_IN_WEEK = 7
         const val MAX_FACT_CACHE_SIZE = 512
+        const val MAX_SEARCH_RESULTS = 200
 
         val WHITESPACE =
             Regex("\\s+")
