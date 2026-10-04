@@ -220,6 +220,10 @@ fun SettingsScreen(
             if (
                 state.memoryCount > 0
             ) {
+                val bytesPerMemory =
+                    state.indexBytes /
+                        state.memoryCount
+
                 Text(
                     text =
                         stringResource(
@@ -227,11 +231,31 @@ fun SettingsScreen(
                             android.text.format.Formatter
                                 .formatShortFileSize(
                                     context,
-                                    state.indexBytes /
-                                        state.memoryCount
+                                    bytesPerMemory
                                 )
                         )
                 )
+
+                if (
+                    state.memoryCount >= 100
+                ) {
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.settings_index_projection_10k,
+                                android.text.format.Formatter
+                                    .formatShortFileSize(
+                                        context,
+                                        bytesPerMemory *
+                                            10_000L
+                                    )
+                            ),
+                        style =
+                            MaterialTheme
+                                .typography
+                                .bodySmall
+                    )
+                }
             }
 
             if (
