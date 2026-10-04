@@ -52,9 +52,6 @@ class MemoryRepository(
     fun unavailableCount(): Flow<Int> =
         dao.unavailableCount()
 
-    suspend fun indexedUris(): Set<String> =
-        dao.allUris().toHashSet()
-
     suspend fun index(
         uri: Uri,
         createdAt: Long =
