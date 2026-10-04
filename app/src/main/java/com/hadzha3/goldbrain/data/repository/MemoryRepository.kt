@@ -5,6 +5,7 @@ import com.hadzha3.goldbrain.data.analysis.ImageAnalyzer
 import com.hadzha3.goldbrain.data.local.MemoryDao
 import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.data.media.MediaAccessChecker
+import com.hadzha3.goldbrain.domain.index.IndexTextCompactor
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -59,17 +60,6 @@ class MemoryRepository(
         val analysis =
             imageAnalyzer.analyze(uri)
 
-        val searchableText =
-            listOf(
-                analysis.title,
-                analysis.category,
-                analysis.text,
-                analysis.labels
-                    .joinToString(" ")
-            )
-                .joinToString("\n")
-                .lowercase()
-
         val now =
             System.currentTimeMillis()
 
@@ -82,12 +72,15 @@ class MemoryRepository(
                 title =
                     analysis.title,
                 ocrText =
-                    analysis.text,
+                    IndexTextCompactor
+                        .compactOcr(
+                            analysis.text
+                        ),
                 labels =
-                    analysis.labels
-                        .joinToString(", "),
-                searchableText =
-                    searchableText,
+                    IndexTextCompactor
+                        .compactLabels(
+                            analysis.labels
+                        ),
                 isAvailable = true,
                 lastVerifiedAt = now,
                 userNote = existingNote
