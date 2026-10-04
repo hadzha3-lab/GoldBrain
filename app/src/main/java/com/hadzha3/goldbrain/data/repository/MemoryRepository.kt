@@ -8,9 +8,13 @@ import com.hadzha3.goldbrain.data.media.MediaAccessChecker
 import com.hadzha3.goldbrain.domain.index.IndexTextCompactor
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 
 class MemoryRepository(
@@ -19,6 +23,9 @@ class MemoryRepository(
     private val searchEngine: MemorySearchEngine,
     private val mediaAccessChecker: MediaAccessChecker
 ) {
+    private val searchRevision =
+        MutableStateFlow(0L)
+
     fun memories(
         query: String
     ): Flow<List<MemoryEntity>> =
@@ -29,10 +36,16 @@ class MemoryRepository(
                 HOME_RECENT_LIMIT
             )
         } else {
-            dao.observeAll()
-                .map { items ->
-                    searchEngine.search(
-                        items,
+            combine(
+                dao.count(),
+                searchRevision
+            ) {
+                    _,
+                    revision ->
+                revision
+            }
+                .mapLatest {
+                    searchPaged(
                         query
                     )
                 }
@@ -91,6 +104,8 @@ class MemoryRepository(
                 userNote = existingNote
             )
         )
+
+        bumpSearchRevision()
     }
 
     suspend fun verifyAvailability(
@@ -102,23 +117,31 @@ class MemoryRepository(
         val now =
             System.currentTimeMillis()
 
-        dao.urisForVerification(limit)
-            .forEach { uriString ->
-                val available =
-                    mediaAccessChecker
-                        .isAvailable(
-                            Uri.parse(
-                                uriString
-                            )
-                        )
+        val uris =
+            dao.urisForVerification(
+                limit
+            )
 
-                dao.updateAvailability(
-                    uri = uriString,
-                    available =
-                        available,
-                    verifiedAt = now
-                )
-            }
+        uris.forEach { uriString ->
+            val available =
+                mediaAccessChecker
+                    .isAvailable(
+                        Uri.parse(
+                            uriString
+                        )
+                    )
+
+            dao.updateAvailability(
+                uri = uriString,
+                available =
+                    available,
+                verifiedAt = now
+            )
+        }
+
+        if (uris.isNotEmpty()) {
+            bumpSearchRevision()
+        }
     }
 
     suspend fun updateUserNote(
@@ -129,6 +152,8 @@ class MemoryRepository(
             uri = uri,
             note = note.trim()
         )
+
+        bumpSearchRevision()
     }
 
     suspend fun removeMemory(
@@ -137,10 +162,63 @@ class MemoryRepository(
         dao.deleteByUri(
             uri
         )
+
+        bumpSearchRevision()
     }
 
     suspend fun clearIndex() {
         dao.clearAll()
+        bumpSearchRevision()
+    }
+
+    private suspend fun searchPaged(
+        query: String
+    ): List<MemoryEntity> {
+        var offset =
+            0
+
+        var best =
+            emptyList<MemoryEntity>()
+
+        while (true) {
+            currentCoroutineContext()
+                .ensureActive()
+
+            val page =
+                dao.page(
+                    limit =
+                        SEARCH_PAGE_SIZE,
+                    offset =
+                        offset
+                )
+
+            if (page.isEmpty()) {
+                break
+            }
+
+            best =
+                searchEngine.search(
+                    best + page,
+                    query
+                )
+
+            offset +=
+                page.size
+
+            if (
+                page.size <
+                SEARCH_PAGE_SIZE
+            ) {
+                break
+            }
+        }
+
+        return best
+    }
+
+    private fun bumpSearchRevision() {
+        searchRevision.value =
+            searchRevision.value + 1L
     }
 
     companion object {
@@ -149,5 +227,8 @@ class MemoryRepository(
 
         const val HOME_RECENT_LIMIT =
             200
+
+        const val SEARCH_PAGE_SIZE =
+            250
     }
 }
