@@ -140,6 +140,9 @@ fun HomeRoute(
                         CameraActivity::class.java
                     )
                 )
+            } else {
+                homeViewModel
+                    .showCameraPermissionDenied()
             }
         }
 
