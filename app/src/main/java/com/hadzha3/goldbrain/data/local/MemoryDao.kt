@@ -24,6 +24,16 @@ interface MemoryDao {
         limit: Int
     ): Flow<List<MemoryEntity>>
 
+    @Query(
+        "SELECT * FROM memories " +
+            "ORDER BY createdAt DESC " +
+            "LIMIT :limit OFFSET :offset"
+    )
+    suspend fun page(
+        limit: Int,
+        offset: Int
+    ): List<MemoryEntity>
+
     @Query("SELECT * FROM memories WHERE uri = :uri LIMIT 1")
     fun observeByUri(
         uri: String
