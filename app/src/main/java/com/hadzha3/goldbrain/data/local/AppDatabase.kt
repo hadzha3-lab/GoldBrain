@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase
         IndexFailureEntity::class,
         IgnoredMediaEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -39,6 +39,9 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         *DatabaseMigrations.ALL
+                    )
+                    .setJournalMode(
+                        JournalMode.TRUNCATE
                     )
                     .build()
                     .also {
