@@ -414,6 +414,43 @@ class MemorySearchEngineTest {
     }
 
     @Test
+    fun weakCameraGuessIsNotTreatedAsMyPhoto() {
+        val weakCamera =
+            memory(
+                uri = "weak-camera",
+                labels = "Car",
+                sourceType = "CAMERA",
+                sourceConfidence = 62
+            )
+
+        val strongCamera =
+            memory(
+                uri = "strong-camera",
+                labels = "Car",
+                sourceType = "CAMERA",
+                sourceConfidence = 95
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(
+                    weakCamera,
+                    strongCamera
+                ),
+                "мои фото машины"
+            )
+
+        assertEquals(
+            listOf(
+                "strong-camera"
+            ),
+            result.map {
+                it.uri
+            }
+        )
+    }
+
+    @Test
     fun screenshotSourceCanBeTheWholeQuery() {
         val screenshot =
             memory(
@@ -478,7 +515,15 @@ class MemorySearchEngineTest {
         text: String = "",
         labels: String = "",
         note: String = "",
-        sourceType: String = "UNKNOWN"
+        sourceType: String = "UNKNOWN",
+        sourceConfidence: Int =
+            if (
+                sourceType == "UNKNOWN"
+            ) {
+                0
+            } else {
+                95
+            }
     ) = MemoryEntity(
         uri = uri,
         createdAt = createdAt,
@@ -487,7 +532,9 @@ class MemorySearchEngineTest {
         ocrText = text,
         labels = labels,
         userNote = note,
-        sourceType = sourceType
+        sourceType = sourceType,
+        sourceConfidence =
+            sourceConfidence
     )
 
     private fun date(
