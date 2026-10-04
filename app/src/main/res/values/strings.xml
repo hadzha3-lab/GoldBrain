@@ -69,6 +69,7 @@
     <string name="settings_failed_photo_count">Проблемных фото в ожидании: %1$d</string>
     <string name="settings_index_size">Размер индекса: %1$s</string>
     <string name="settings_cache_size">Временный кэш: %1$s</string>
+    <string name="settings_index_per_memory">В среднем на одно фото: %1$s</string>
     <string name="settings_index_progress">Добавлено: %1$d из %2$d · ошибок: %3$d</string>
     <string name="settings_index_now">Индексировать сейчас</string>
     <string name="settings_recheck">Проверить доступность оригиналов</string>
@@ -76,7 +77,7 @@
     <string name="settings_clear_cache">Очистить временный кэш</string>
 
     <string name="settings_privacy_title">Хранение и приватность</string>
-    <string name="settings_privacy_text">Существующие фотографии доступны GoldBrain только для чтения: приложение не запрашивает разрешение на изменение или удаление галереи. Локально сохраняются только индекс, распознанный текст, категории, метки и заметки. Снимок создаётся только когда ты сам нажимаешь кнопку камеры.</string>
+    <string name="settings_privacy_text">Существующие фотографии доступны GoldBrain только для чтения. Оригиналы и миниатюры в индекс не копируются. Локально сохраняются URI, дата, компактный OCR-текст, категории, несколько меток и заметки. Снимок создаётся только когда ты сам нажимаешь кнопку камеры.</string>
     <string name="settings_clear_index">Очистить локальный индекс</string>
     <string name="settings_clear_confirm_title">Очистить индекс?</string>
     <string name="settings_clear_confirm_text">Будут удалены локальные результаты анализа и сохранённые разрешения Photo Picker. Оригиналы фотографий не удаляются. Фоновая индексация будет отключена.</string>
