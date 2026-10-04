@@ -436,11 +436,28 @@ class HomeViewModel(
     }
 
     fun showGalleryPermissionDenied() {
-        localStatus.value =
-            getApplication<Application>()
-                .getString(
-                    R.string.gallery_permission_denied
-                )
+        viewModelScope.launch {
+            val message =
+                getApplication<Application>()
+                    .getString(
+                        R.string.gallery_permission_denied
+                    )
+
+            localStatus.value =
+                message
+
+            delay(
+                LOCAL_STATUS_DURATION_MS
+            )
+
+            if (
+                localStatus.value ==
+                message
+            ) {
+                localStatus.value =
+                    ""
+            }
+        }
     }
 
     fun startGalleryIndex() {
