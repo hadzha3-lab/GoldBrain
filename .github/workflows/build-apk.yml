@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: goldbrain-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Test and build GoldBrain debug APK
