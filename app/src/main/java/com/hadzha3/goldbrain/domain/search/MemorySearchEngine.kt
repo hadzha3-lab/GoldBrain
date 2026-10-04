@@ -65,10 +65,12 @@ class MemorySearchEngine(
             } else {
                 dateFiltered.filter {
                         item ->
-                    PhotoSourceType
-                        .fromStored(
-                            item.sourceType
-                        ) in sourceFilter
+                    item.sourceConfidence >=
+                        MIN_SOURCE_FILTER_CONFIDENCE &&
+                        PhotoSourceType
+                            .fromStored(
+                                item.sourceType
+                            ) in sourceFilter
                 }
             }
 
@@ -565,6 +567,7 @@ class MemorySearchEngine(
         const val DAYS_IN_WEEK = 7
         const val MAX_FACT_CACHE_SIZE = 512
         const val MAX_SEARCH_RESULTS = 200
+        const val MIN_SOURCE_FILTER_CONFIDENCE = 70
 
         val WHITESPACE =
             Regex("\\s+")
