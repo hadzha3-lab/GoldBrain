@@ -6,8 +6,8 @@ import org.junit.Test
 
 class SupplementalOcrHeuristicsTest {
     @Test
-    fun textDetectedByPrimaryOcrEnablesCyrillicPass() {
-        assertTrue(
+    fun tinyIncidentalTextSkipsCyrillicPass() {
+        assertFalse(
             SupplementalOcrHeuristics
                 .shouldRunCyrillicOcr(
                     primaryText =
@@ -57,6 +57,36 @@ class SupplementalOcrHeuristicsTest {
                     labels =
                         listOf(
                             "Screenshot"
+                        )
+                )
+        )
+    }
+
+    @Test
+    fun substantialPrimaryTextEnablesFallbackWithoutLabel() {
+        assertTrue(
+            SupplementalOcrHeuristics
+                .shouldRunCyrillicOcr(
+                    primaryText =
+                        "Order number 123456, delivery address and additional details",
+                    labels =
+                        listOf(
+                            "Indoor"
+                        )
+                )
+        )
+    }
+
+    @Test
+    fun alreadyUsefulCyrillicTextSkipsDuplicatePass() {
+        assertFalse(
+            SupplementalOcrHeuristics
+                .shouldRunCyrillicOcr(
+                    primaryText =
+                        "Это уже достаточно длинный русский текст, распознанный первым OCR без дополнительного прохода",
+                    labels =
+                        listOf(
+                            "Document"
                         )
                 )
         )
