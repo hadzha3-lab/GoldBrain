@@ -9,6 +9,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hadzha3.goldbrain.domain.facts.MemoryFactType
 import com.hadzha3.goldbrain.domain.facts.MemoryFactsExtractor
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
@@ -38,29 +39,48 @@ class MlKitImageAnalyzer(
         val image = InputImage.fromFilePath(context, uri)
 
         val textDeferred = async {
-            runCatching {
-                textRecognizer.process(image).await().text
-            }.getOrDefault("")
+            recover(
+                default = ""
+            ) {
+                textRecognizer
+                    .process(
+                        image
+                    )
+                    .await()
+                    .text
+            }
         }
 
         val labelsDeferred = async {
-            runCatching {
-                labeler.process(image).await()
+            recover(
+                default =
+                    emptyList()
+            ) {
+                labeler
+                    .process(
+                        image
+                    )
+                    .await()
                     .asSequence()
                     .filter {
                         it.confidence >=
                             MIN_LABEL_CONFIDENCE
                     }
-                    .take(MAX_LABELS)
-                    .map { it.text }
+                    .take(
+                        MAX_LABELS
+                    )
+                    .map {
+                        it.text
+                    }
                     .toList()
-            }.getOrDefault(
-                emptyList()
-            )
+            }
         }
 
         val colorsDeferred = async {
-            runCatching {
+            recover(
+                default =
+                    emptyList()
+            ) {
                 colorAnalyzer
                     .analyze(
                         uri
@@ -68,9 +88,7 @@ class MlKitImageAnalyzer(
                     .flatMap {
                         it.labels()
                     }
-            }.getOrDefault(
-                emptyList()
-            )
+            }
         }
 
         val primaryText =
@@ -91,14 +109,14 @@ class MlKitImageAnalyzer(
                             primaryLabels
                     )
             ) {
-                runCatching {
+                recover(
+                    default = ""
+                ) {
                     cyrillicRecognizer
                         .recognize(
                             uri
                         )
-                }.getOrDefault(
-                    ""
-                )
+                }
             } else {
                 ""
             }
@@ -134,6 +152,21 @@ class MlKitImageAnalyzer(
             labels = labels
         )
     }
+
+    private suspend fun <T> recover(
+        default: T,
+        block: suspend () -> T
+    ): T =
+        try {
+            block()
+        } catch (
+            cancellation:
+                CancellationException
+        ) {
+            throw cancellation
+        } catch (_: Exception) {
+            default
+        }
 
     private fun mergeText(
         primary: String,
