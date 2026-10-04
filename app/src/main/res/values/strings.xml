@@ -70,6 +70,7 @@
     <string name="settings_index_size">Размер индекса: %1$s</string>
     <string name="settings_cache_size">Временный кэш: %1$s</string>
     <string name="settings_index_per_memory">В среднем на одно фото: %1$s</string>
+    <string name="settings_index_projection_10k">При таком среднем 10 000 фото ≈ %1$s</string>
     <string name="settings_index_progress">Добавлено: %1$d из %2$d · ошибок: %3$d</string>
     <string name="settings_index_now">Индексировать сейчас</string>
     <string name="settings_recheck">Проверить доступность оригиналов</string>
