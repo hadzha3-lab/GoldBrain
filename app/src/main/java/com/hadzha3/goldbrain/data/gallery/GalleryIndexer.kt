@@ -4,7 +4,6 @@ import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
 import com.hadzha3.goldbrain.data.repository.IndexLookupRepository
 import com.hadzha3.goldbrain.data.repository.MemoryIndexMaintenanceRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -105,6 +104,11 @@ class GalleryIndexer(
             failureRepository.clearAll()
         }
 
+    suspend fun abortScan() =
+        mutex.withLock {
+            resetScanState()
+        }
+
     suspend fun indexNextBatch(
         batchSize: Int =
             DEFAULT_BATCH_SIZE
@@ -153,23 +157,35 @@ class GalleryIndexer(
 
                     indexed++
                 } catch (
-                    cancellation:
-                        CancellationException
-                ) {
-                    throw cancellation
-                } catch (
                     error: Exception
                 ) {
-                    failureRepository
-                        .recordFailure(
-                            uri =
-                                item.uri
-                                    .toString(),
-                            error =
+                    when (
+                        GalleryIndexErrorPolicy
+                            .actionFor(
                                 error
-                        )
+                            )
+                    ) {
+                        GalleryIndexErrorAction.CANCEL ->
+                            throw error
 
-                    failed++
+                        GalleryIndexErrorAction
+                            .STOP_FOR_PERMISSION ->
+                            throw error
+
+                        GalleryIndexErrorAction
+                            .RECORD_PHOTO_FAILURE -> {
+                            failureRepository
+                                .recordFailure(
+                                    uri =
+                                        item.uri
+                                            .toString(),
+                                    error =
+                                        error
+                                )
+
+                            failed++
+                        }
+                    }
                 }
             }
 
