@@ -36,7 +36,11 @@ class PhotoSourceClassifier(
                 .lowercase()
 
         val combinedPath =
-            "$relativePath/$bucket"
+            "/$relativePath/$bucket/"
+                .replace(
+                    "//",
+                    "/"
+                )
 
         if (
             authority ==
