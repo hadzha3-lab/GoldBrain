@@ -335,6 +335,122 @@ class MemorySearchEngineTest {
     }
 
     @Test
+    fun downloadedPhotoQueryFiltersOutCameraCopies() {
+        val downloaded =
+            memory(
+                uri = "downloaded",
+                labels = "Headphones",
+                sourceType = "DOWNLOAD"
+            )
+
+        val camera =
+            memory(
+                uri = "camera",
+                labels = "Headphones",
+                sourceType = "CAMERA"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(
+                    camera,
+                    downloaded
+                ),
+                "покажи скачанные фото наушников"
+            )
+
+        assertEquals(
+            listOf(
+                "downloaded"
+            ),
+            result.map {
+                it.uri
+            }
+        )
+    }
+
+    @Test
+    fun myPhotosIncludeCameraAndGoldBrain() {
+        val camera =
+            memory(
+                uri = "camera",
+                labels = "Car",
+                sourceType = "CAMERA"
+            )
+
+        val goldBrain =
+            memory(
+                uri = "goldbrain",
+                labels = "Car",
+                sourceType = "GOLDBRAIN"
+            )
+
+        val download =
+            memory(
+                uri = "download",
+                labels = "Car",
+                sourceType = "DOWNLOAD"
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(
+                    download,
+                    goldBrain,
+                    camera
+                ),
+                "найди мои фото машины"
+            )
+
+        assertEquals(
+            setOf(
+                "camera",
+                "goldbrain"
+            ),
+            result.map {
+                it.uri
+            }.toSet()
+        )
+    }
+
+    @Test
+    fun screenshotSourceCanBeTheWholeQuery() {
+        val screenshot =
+            memory(
+                uri = "screen",
+                sourceType =
+                    "SCREENSHOT",
+                createdAt = 20L
+            )
+
+        val camera =
+            memory(
+                uri = "camera",
+                sourceType =
+                    "CAMERA",
+                createdAt = 30L
+            )
+
+        val result =
+            searchEngine.search(
+                listOf(
+                    camera,
+                    screenshot
+                ),
+                "скриншоты"
+            )
+
+        assertEquals(
+            listOf(
+                "screen"
+            ),
+            result.map {
+                it.uri
+            }
+        )
+    }
+
+    @Test
     fun russianKeyQueryMatchesEnglishLabel() {
         val key =
             memory(
@@ -361,7 +477,8 @@ class MemorySearchEngineTest {
         title: String = "",
         text: String = "",
         labels: String = "",
-        note: String = ""
+        note: String = "",
+        sourceType: String = "UNKNOWN"
     ) = MemoryEntity(
         uri = uri,
         createdAt = createdAt,
@@ -369,7 +486,8 @@ class MemorySearchEngineTest {
         title = title,
         ocrText = text,
         labels = labels,
-        userNote = note
+        userNote = note,
+        sourceType = sourceType
     )
 
     private fun date(
