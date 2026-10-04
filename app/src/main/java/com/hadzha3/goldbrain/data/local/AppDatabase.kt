@@ -20,6 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun indexStateDao(): IndexStateDao
     abstract fun indexFailureDao(): IndexFailureDao
     abstract fun ignoredMediaDao(): IgnoredMediaDao
+    abstract fun indexLookupDao(): IndexLookupDao
 
     companion object {
         const val DATABASE_NAME =
