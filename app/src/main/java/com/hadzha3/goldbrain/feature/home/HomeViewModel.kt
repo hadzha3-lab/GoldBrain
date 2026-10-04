@@ -441,11 +441,25 @@ class HomeViewModel(
     }
 
     fun showGalleryPermissionDenied() {
+        showTransientStatus(
+            R.string.gallery_permission_denied
+        )
+    }
+
+    fun showCameraPermissionDenied() {
+        showTransientStatus(
+            R.string.camera_permission_denied
+        )
+    }
+
+    private fun showTransientStatus(
+        stringRes: Int
+    ) {
         viewModelScope.launch {
             val message =
                 getApplication<Application>()
                     .getString(
-                        R.string.gallery_permission_denied
+                        stringRes
                     )
 
             localStatus.value =
