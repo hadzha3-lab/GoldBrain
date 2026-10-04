@@ -41,10 +41,12 @@ class MemorySearchEngine(
             .filter { it.length >= MIN_TERM_LENGTH }
             .filterNot(STOP_WORDS::contains)
             .filterNot(TEMPORAL_WORDS::contains)
-            .filterNot(
-                PhotoSourceQueryParser::
-                    isSourceIntentWord
-            )
+            .filterNot { word ->
+                PhotoSourceQueryParser
+                    .isSourceIntentWord(
+                        word
+                    )
+            }
             .distinct()
             .toList()
 
