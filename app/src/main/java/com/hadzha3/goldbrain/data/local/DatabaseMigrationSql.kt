@@ -95,8 +95,7 @@ object DatabaseMigrationSql {
                         )
                         """.trimIndent()
                     )
-            )
-,
+            ),
             SqlMigrationStep(
                 fromVersion = 6,
                 toVersion = 7,
