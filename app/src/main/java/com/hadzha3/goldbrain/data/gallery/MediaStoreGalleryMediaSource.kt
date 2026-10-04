@@ -42,8 +42,7 @@ class MediaStoreGalleryMediaSource(
                         startOffset - 1
                     )
                 ) {
-                    return@withContext
-                        GalleryScanResult(
+                    return@withContext GalleryScanResult(
                             nextOffset =
                                 startOffset,
                             reachedEnd =
@@ -134,8 +133,7 @@ class MediaStoreGalleryMediaSource(
                         page.clear()
 
                         if (!shouldContinue) {
-                            return@withContext
-                                GalleryScanResult(
+                            return@withContext GalleryScanResult(
                                     nextOffset =
                                         nextOffset,
                                     reachedEnd =
