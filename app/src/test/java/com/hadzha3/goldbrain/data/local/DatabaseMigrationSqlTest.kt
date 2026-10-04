@@ -132,7 +132,7 @@ class DatabaseMigrationSqlTest {
 
                                 assertTrue(
                                     compactOcr.length <=
-                                        4096
+                                        2048
                                 )
 
                                 assertTrue(
