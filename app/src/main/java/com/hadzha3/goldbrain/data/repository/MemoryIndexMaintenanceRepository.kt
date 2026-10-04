@@ -39,10 +39,6 @@ class MemoryIndexMaintenanceRepository(
         )
     }
 
-    suspend fun ignoredUris(): Set<String> =
-        ignoredDao.allUris()
-            .toHashSet()
-
     suspend fun clearIgnored() {
         ignoredDao.clearAll()
     }
