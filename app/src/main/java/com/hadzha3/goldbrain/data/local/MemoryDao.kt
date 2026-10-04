@@ -35,9 +35,6 @@ interface MemoryDao {
     @Query("SELECT COUNT(*) FROM memories WHERE isAvailable = 0")
     fun unavailableCount(): Flow<Int>
 
-    @Query("SELECT uri FROM memories")
-    suspend fun allUris(): List<String>
-
     @Query("""
         SELECT uri FROM memories
         ORDER BY lastVerifiedAt ASC
