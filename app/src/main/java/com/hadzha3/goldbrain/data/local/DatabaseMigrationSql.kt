@@ -96,5 +96,62 @@ object DatabaseMigrationSql {
                         """.trimIndent()
                     )
             )
+,
+            SqlMigrationStep(
+                fromVersion = 6,
+                toVersion = 7,
+                statements =
+                    listOf(
+                        """
+                        CREATE TABLE memories_compact (
+                            uri TEXT NOT NULL,
+                            createdAt INTEGER NOT NULL,
+                            category TEXT NOT NULL,
+                            title TEXT NOT NULL,
+                            ocrText TEXT NOT NULL,
+                            labels TEXT NOT NULL,
+                            isAvailable INTEGER NOT NULL DEFAULT 1,
+                            lastVerifiedAt INTEGER NOT NULL DEFAULT 0,
+                            userNote TEXT NOT NULL DEFAULT '',
+                            PRIMARY KEY(uri)
+                        )
+                        """.trimIndent(),
+                        """
+                        INSERT INTO memories_compact (
+                            uri,
+                            createdAt,
+                            category,
+                            title,
+                            ocrText,
+                            labels,
+                            isAvailable,
+                            lastVerifiedAt,
+                            userNote
+                        )
+                        SELECT
+                            uri,
+                            createdAt,
+                            category,
+                            title,
+                            CASE
+                                WHEN length(ocrText) <= 4096
+                                    THEN ocrText
+                                ELSE
+                                    substr(ocrText, 1, 3072)
+                                    || char(10)
+                                    || '…'
+                                    || char(10)
+                                    || substr(ocrText, -1021)
+                            END,
+                            labels,
+                            isAvailable,
+                            lastVerifiedAt,
+                            userNote
+                        FROM memories
+                        """.trimIndent(),
+                        "DROP TABLE memories",
+                        "ALTER TABLE memories_compact RENAME TO memories"
+                    )
+            )
         )
 }
