@@ -133,14 +133,14 @@ object DatabaseMigrationSql {
                             category,
                             title,
                             CASE
-                                WHEN length(ocrText) <= 4096
+                                WHEN length(ocrText) <= 2048
                                     THEN ocrText
                                 ELSE
-                                    substr(ocrText, 1, 3072)
+                                    substr(ocrText, 1, 1536)
                                     || char(10)
                                     || '…'
                                     || char(10)
-                                    || substr(ocrText, -1021)
+                                    || substr(ocrText, -509)
                             END,
                             labels,
                             isAvailable,
