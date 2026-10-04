@@ -217,6 +217,23 @@ fun SettingsScreen(
             )
 
             if (
+                state.memoryCount > 0
+            ) {
+                Text(
+                    text =
+                        stringResource(
+                            R.string.settings_index_per_memory,
+                            android.text.format.Formatter
+                                .formatShortFileSize(
+                                    context,
+                                    state.indexBytes /
+                                        state.memoryCount
+                                )
+                        )
+                )
+            }
+
+            if (
                 state.isIndexing ||
                 state.totalInRun > 0
             ) {
