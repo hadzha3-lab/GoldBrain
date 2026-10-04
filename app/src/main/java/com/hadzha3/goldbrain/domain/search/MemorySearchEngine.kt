@@ -606,12 +606,21 @@ class MemorySearchEngine(
                 "сумм",
                 "телефон",
                 "номер",
+                "контакт",
+                "phone",
+                "mobile",
+                "contact",
                 "почт",
                 "email",
+                "стоим",
+                "price",
+                "amount",
+                "money",
                 "ссыл",
                 "сайт",
                 "url",
                 "дат",
+                "когда",
                 "isbn"
             )
 
