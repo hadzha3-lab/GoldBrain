@@ -22,16 +22,24 @@ class MemoryRepository(
     fun memories(
         query: String
     ): Flow<List<MemoryEntity>> =
-        dao.observeAll()
-            .map { items ->
-                searchEngine.search(
-                    items,
-                    query
-                )
-            }
-            .flowOn(
-                Dispatchers.Default
+        if (
+            query.isBlank()
+        ) {
+            dao.observeRecent(
+                HOME_RECENT_LIMIT
             )
+        } else {
+            dao.observeAll()
+                .map { items ->
+                    searchEngine.search(
+                        items,
+                        query
+                    )
+                }
+                .flowOn(
+                    Dispatchers.Default
+                )
+        }
 
     fun memory(
         uri: String
@@ -141,5 +149,8 @@ class MemoryRepository(
     companion object {
         const val DEFAULT_VERIFICATION_BATCH =
             25
+
+        const val HOME_RECENT_LIMIT =
+            200
     }
 }
