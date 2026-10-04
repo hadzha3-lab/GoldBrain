@@ -37,7 +37,7 @@ if grep -RIn --exclude-dir=build -E   'openFileDescriptor[[:space:]]*\([^,]+,[[:
 fi
 
 if grep -RIn --exclude-dir=build   --exclude=LocalStorageManager.kt -E   '\.delete[[:space:]]*\([[:space:]]*\)|\.deleteRecursively[[:space:]]*\(|Files[[:space:]]*\.[[:space:]]*delete'   "$ROOT"; then
-  fail "File deletion is forbidden outside GoldBrain's own cache manager."
+  fail "File deletion is forbidden outside explicitly allowlisted app-owned storage code."
 fi
 
 echo "Media safety check passed: existing gallery media is read-only."
