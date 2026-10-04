@@ -8,7 +8,7 @@ import java.sql.DriverManager
 
 class DatabaseMigrationSqlTest {
     @Test
-    fun migrationChainIsContinuousFromV1ToV7() {
+    fun migrationChainIsContinuousFromV1ToV8() {
         var expectedVersion = 1
 
         DatabaseMigrationSql.ALL
@@ -28,13 +28,13 @@ class DatabaseMigrationSqlTest {
             }
 
         assertEquals(
-            7,
+            8,
             expectedVersion
         )
     }
 
     @Test
-    fun v1DataSurvivesEveryMigrationToV7() {
+    fun v1DataSurvivesEveryMigrationToV8() {
         Class.forName(
             "org.sqlite.JDBC"
         )
@@ -80,7 +80,9 @@ class DatabaseMigrationSqlTest {
                                     isAvailable,
                                     lastVerifiedAt,
                                     userNote,
-                                    ocrText
+                                    ocrText,
+                                    sourceType,
+                                    sourceConfidence
                                 FROM memories
                                 WHERE uri = 'content://legacy/1'
                                 """.trimIndent()
@@ -144,6 +146,20 @@ class DatabaseMigrationSqlTest {
                                 assertTrue(
                                     compactOcr.endsWith(
                                         "ИТОГО 1000"
+                                    )
+                                )
+
+                                assertEquals(
+                                    "UNKNOWN",
+                                    row.getString(
+                                        "sourceType"
+                                    )
+                                )
+
+                                assertEquals(
+                                    0,
+                                    row.getInt(
+                                        "sourceConfidence"
                                     )
                                 )
                             }
