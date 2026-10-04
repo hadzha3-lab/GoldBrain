@@ -151,8 +151,7 @@ object DatabaseMigrationSql {
                         "DROP TABLE memories",
                         "ALTER TABLE memories_compact RENAME TO memories"
                     )
-            )
-,
+            ),
             SqlMigrationStep(
                 fromVersion = 7,
                 toVersion = 8,
