@@ -41,7 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
                         *DatabaseMigrations.ALL
                     )
                     .setJournalMode(
-                        JournalMode.TRUNCATE
+                        RoomDatabase.JournalMode.TRUNCATE
                     )
                     .build()
                     .also {
