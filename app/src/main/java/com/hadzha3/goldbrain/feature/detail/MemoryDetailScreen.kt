@@ -36,6 +36,7 @@ import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.domain.facts.MemoryFact
 import com.hadzha3.goldbrain.domain.facts.MemoryFactType
 import com.hadzha3.goldbrain.domain.facts.MemoryFactsExtractor
+import com.hadzha3.goldbrain.feature.source.photoSourceLabel
 import java.text.DateFormat
 import java.util.Date
 
@@ -112,6 +113,33 @@ fun MemoryDetailScreen(
                 .format(Date(memory.createdAt)),
             style = MaterialTheme.typography.bodySmall
         )
+
+        DetailSection(
+            title =
+                stringResource(
+                    R.string.detail_source
+                ),
+            value =
+                photoSourceLabel(
+                    memory.sourceType
+                )
+        )
+
+        if (
+            memory.sourceConfidence > 0
+        ) {
+            Text(
+                text =
+                    stringResource(
+                        R.string.detail_source_confidence,
+                        memory.sourceConfidence
+                    ),
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodySmall
+            )
+        }
 
         if (memory.isAvailable) {
             AsyncImage(
