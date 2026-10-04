@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.appContainer
+import com.hadzha3.goldbrain.core.permissions.MediaPermissions
+import com.hadzha3.goldbrain.background.AutoIndexPolicy
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.feature.detail.MemoryDetailActionState
@@ -464,6 +466,16 @@ class HomeViewModel(
     }
 
     fun startGalleryIndex() {
+        if (
+            !MediaPermissions
+                .hasGalleryAccess(
+                    getApplication()
+                )
+        ) {
+            showGalleryPermissionDenied()
+            return
+        }
+
         localStatus.value = ""
 
         GalleryIndexScheduler
@@ -473,9 +485,21 @@ class HomeViewModel(
     }
 
     fun enablePeriodicGalleryIndex() {
+        val hasAccess =
+            MediaPermissions
+                .hasGalleryAccess(
+                    getApplication()
+                )
+
         if (
-            preferences
-                .autoIndexEnabled
+            AutoIndexPolicy
+                .shouldSchedule(
+                    enabled =
+                        preferences
+                            .autoIndexEnabled,
+                    hasGalleryAccess =
+                        hasAccess
+                )
         ) {
             GalleryIndexScheduler
                 .ensurePeriodic(
