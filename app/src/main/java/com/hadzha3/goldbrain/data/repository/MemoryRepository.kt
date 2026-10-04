@@ -170,23 +170,40 @@ class MemoryRepository(
     private suspend fun searchPaged(
         query: String
     ): List<MemoryEntity> {
-        var offset =
-            0
-
         var best =
             emptyList<MemoryEntity>()
+
+        var beforeCreatedAt:
+            Long? =
+            null
+
+        var beforeUri:
+            String? =
+            null
 
         while (true) {
             currentCoroutineContext()
                 .ensureActive()
 
             val page =
-                dao.page(
-                    limit =
-                        SEARCH_PAGE_SIZE,
-                    offset =
-                        offset
-                )
+                if (
+                    beforeCreatedAt == null ||
+                    beforeUri == null
+                ) {
+                    dao.firstSearchPage(
+                        limit =
+                            SEARCH_PAGE_SIZE
+                    )
+                } else {
+                    dao.searchPageBefore(
+                        beforeCreatedAt =
+                            beforeCreatedAt,
+                        beforeUri =
+                            beforeUri,
+                        limit =
+                            SEARCH_PAGE_SIZE
+                    )
+                }
 
             if (page.isEmpty()) {
                 break
@@ -198,8 +215,14 @@ class MemoryRepository(
                     query
                 )
 
-            offset +=
-                page.size
+            val last =
+                page.last()
+
+            beforeCreatedAt =
+                last.createdAt
+
+            beforeUri =
+                last.uri
 
             if (
                 page.size <
