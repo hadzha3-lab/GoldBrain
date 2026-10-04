@@ -18,5 +18,9 @@ data class MemoryEntity(
     @ColumnInfo(defaultValue = "0")
     val lastVerifiedAt: Long = 0L,
     @ColumnInfo(defaultValue = "''")
-    val userNote: String = ""
+    val userNote: String = "",
+    @ColumnInfo(defaultValue = "'UNKNOWN'")
+    val sourceType: String = "UNKNOWN",
+    @ColumnInfo(defaultValue = "0")
+    val sourceConfidence: Int = 0
 )
