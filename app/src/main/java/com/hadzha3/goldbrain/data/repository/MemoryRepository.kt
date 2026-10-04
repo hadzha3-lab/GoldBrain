@@ -163,6 +163,10 @@ class MemoryRepository(
         bumpSearchRevision()
     }
 
+    fun notifyIndexChanged() {
+        bumpSearchRevision()
+    }
+
     private suspend fun searchPaged(
         query: String
     ): List<MemoryEntity> {
