@@ -8,7 +8,7 @@ import java.sql.DriverManager
 
 class DatabaseMigrationSqlTest {
     @Test
-    fun migrationChainIsContinuousFromV1ToV6() {
+    fun migrationChainIsContinuousFromV1ToV7() {
         var expectedVersion = 1
 
         DatabaseMigrationSql.ALL
@@ -28,13 +28,13 @@ class DatabaseMigrationSqlTest {
             }
 
         assertEquals(
-            6,
+            7,
             expectedVersion
         )
     }
 
     @Test
-    fun v1DataSurvivesEveryMigrationToV6() {
+    fun v1DataSurvivesEveryMigrationToV7() {
         Class.forName(
             "org.sqlite.JDBC"
         )
@@ -79,7 +79,8 @@ class DatabaseMigrationSqlTest {
                                     title,
                                     isAvailable,
                                     lastVerifiedAt,
-                                    userNote
+                                    userNote,
+                                    ocrText
                                 FROM memories
                                 WHERE uri = 'content://legacy/1'
                                 """.trimIndent()
@@ -123,6 +124,28 @@ class DatabaseMigrationSqlTest {
                                         "userNote"
                                     )
                                 )
+
+                                val compactOcr =
+                                    row.getString(
+                                        "ocrText"
+                                    )
+
+                                assertTrue(
+                                    compactOcr.length <=
+                                        4096
+                                )
+
+                                assertTrue(
+                                    compactOcr.startsWith(
+                                        "НАЧАЛО"
+                                    )
+                                )
+
+                                assertTrue(
+                                    compactOcr.endsWith(
+                                        "ИТОГО 1000"
+                                    )
+                                )
                             }
                     }
 
@@ -164,6 +187,16 @@ class DatabaseMigrationSqlTest {
                             "index_state",
                         column =
                             "startedAt"
+                    )
+                )
+
+                assertTrue(
+                    !columnExists(
+                        database,
+                        table =
+                            "memories",
+                        column =
+                            "searchableText"
                     )
                 )
             }
@@ -233,7 +266,11 @@ class DatabaseMigrationSqlTest {
 
                 statement.setString(
                     5,
-                    "ИТОГО 1000"
+                    "НАЧАЛО " +
+                        "текст ".repeat(
+                            2_000
+                        ) +
+                        "ИТОГО 1000"
                 )
 
                 statement.setString(
