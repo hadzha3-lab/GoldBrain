@@ -1,6 +1,7 @@
 package com.hadzha3.goldbrain.di
 
 import android.content.Context
+import com.hadzha3.goldbrain.background.AndroidIndexingLoadProvider
 import com.hadzha3.goldbrain.background.IndexRecoveryCoordinator
 import com.hadzha3.goldbrain.data.analysis.MlKitImageAnalyzer
 import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
@@ -57,6 +58,13 @@ class AppContainer(
             appContext
         )
     }
+
+    val indexingLoadProvider:
+        AndroidIndexingLoadProvider by lazy {
+            AndroidIndexingLoadProvider(
+                appContext
+            )
+        }
 
     val indexingPreferences: IndexingPreferences by lazy {
         IndexingPreferences(
