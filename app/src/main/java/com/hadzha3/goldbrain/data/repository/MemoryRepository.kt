@@ -5,8 +5,10 @@ import com.hadzha3.goldbrain.data.analysis.ImageAnalyzer
 import com.hadzha3.goldbrain.data.local.MemoryDao
 import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.data.media.MediaAccessChecker
+import com.hadzha3.goldbrain.data.media.PhotoSourceDetector
 import com.hadzha3.goldbrain.domain.index.IndexTextCompactor
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
+import com.hadzha3.goldbrain.domain.source.PhotoSourceClassification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -20,7 +22,9 @@ class MemoryRepository(
     private val dao: MemoryDao,
     private val imageAnalyzer: ImageAnalyzer,
     private val searchEngine: MemorySearchEngine,
-    private val mediaAccessChecker: MediaAccessChecker
+    private val mediaAccessChecker: MediaAccessChecker,
+    private val sourceDetector:
+        PhotoSourceDetector
 ) {
     private val searchRevision =
         MutableStateFlow(0L)
@@ -60,12 +64,21 @@ class MemoryRepository(
     suspend fun index(
         uri: Uri,
         createdAt: Long =
-            System.currentTimeMillis()
+            System.currentTimeMillis(),
+        source:
+            PhotoSourceClassification? =
+            null
     ) {
         val existingNote =
             dao.userNote(
                 uri.toString()
             ).orEmpty()
+
+        val detectedSource =
+            source ?:
+                sourceDetector.detect(
+                    uri
+                )
 
         val analysis =
             imageAnalyzer.analyze(uri)
@@ -93,7 +106,14 @@ class MemoryRepository(
                         ),
                 isAvailable = true,
                 lastVerifiedAt = now,
-                userNote = existingNote
+                userNote = existingNote,
+                sourceType =
+                    detectedSource
+                        .type
+                        .name,
+                sourceConfidence =
+                    detectedSource
+                        .confidence
             )
         )
 
