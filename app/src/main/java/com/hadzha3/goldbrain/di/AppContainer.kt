@@ -7,6 +7,7 @@ import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.gallery.MediaStoreGalleryMediaSource
 import com.hadzha3.goldbrain.data.local.AppDatabase
 import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
+import com.hadzha3.goldbrain.data.media.AndroidPhotoSourceDetector
 import com.hadzha3.goldbrain.data.media.MediaStoreChangeTracker
 import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
@@ -17,6 +18,7 @@ import com.hadzha3.goldbrain.data.repository.MemoryIndexMaintenanceRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import com.hadzha3.goldbrain.data.storage.LocalStorageManager
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
+import com.hadzha3.goldbrain.domain.source.PhotoSourceClassifier
 
 class AppContainer(
     context: Context
@@ -34,6 +36,20 @@ class AppContainer(
 
     private val searchEngine by lazy {
         MemorySearchEngine()
+    }
+
+    private val photoSourceClassifier by lazy {
+        PhotoSourceClassifier(
+            appContext.packageName
+        )
+    }
+
+    private val photoSourceDetector by lazy {
+        AndroidPhotoSourceDetector(
+            context = appContext,
+            classifier =
+                photoSourceClassifier
+        )
     }
 
     private val mediaAccessChecker by lazy {
@@ -75,7 +91,9 @@ class AppContainer(
             imageAnalyzer = imageAnalyzer,
             searchEngine = searchEngine,
             mediaAccessChecker =
-                mediaAccessChecker
+                mediaAccessChecker,
+            sourceDetector =
+                photoSourceDetector
         )
     }
 
@@ -117,7 +135,9 @@ class AppContainer(
 
     private val galleryMediaSource by lazy {
         MediaStoreGalleryMediaSource(
-            appContext
+            context = appContext,
+            sourceClassifier =
+                photoSourceClassifier
         )
     }
 
