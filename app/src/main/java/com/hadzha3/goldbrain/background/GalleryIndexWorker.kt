@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import com.hadzha3.goldbrain.appContainer
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
-import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import kotlinx.coroutines.CancellationException
 
