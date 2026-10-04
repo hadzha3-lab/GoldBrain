@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hadzha3.goldbrain.appContainer
+import com.hadzha3.goldbrain.background.AutoIndexPolicy
 import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
@@ -204,12 +205,22 @@ class SettingsViewModel(
         refreshPermissions()
 
         if (
-            accessMode.value !=
-            GalleryAccessMode.NONE &&
-            autoIndexEnabled.value
+            AutoIndexPolicy
+                .shouldSchedule(
+                    enabled =
+                        autoIndexEnabled.value,
+                    hasGalleryAccess =
+                        accessMode.value !=
+                            GalleryAccessMode.NONE
+                )
         ) {
             GalleryIndexScheduler
                 .ensurePeriodic(
+                    getApplication()
+                )
+        } else {
+            GalleryIndexScheduler
+                .cancelPeriodic(
                     getApplication()
                 )
         }
@@ -225,9 +236,13 @@ class SettingsViewModel(
             enabled
 
         if (
-            enabled &&
-            accessMode.value !=
-            GalleryAccessMode.NONE
+            AutoIndexPolicy
+                .shouldSchedule(
+                    enabled = enabled,
+                    hasGalleryAccess =
+                        accessMode.value !=
+                            GalleryAccessMode.NONE
+                )
         ) {
             GalleryIndexScheduler
                 .ensurePeriodic(
