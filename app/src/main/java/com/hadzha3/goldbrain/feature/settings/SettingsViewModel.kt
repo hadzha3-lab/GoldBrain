@@ -297,6 +297,10 @@ class SettingsViewModel(
                 .galleryIndexer
                 .clearIndex()
 
+            container
+                .mediaStoreChangeTracker
+                .invalidate()
+
             indexStatusRepository
                 .reset()
 
