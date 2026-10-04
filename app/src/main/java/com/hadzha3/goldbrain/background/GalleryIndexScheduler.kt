@@ -25,7 +25,8 @@ object GalleryIndexScheduler {
         "goldbrain-gallery-index-periodic"
 
     fun startNow(
-        context: Context
+        context: Context,
+        forceScan: Boolean = true
     ) {
         val manager =
             WorkManager.getInstance(context)
@@ -38,7 +39,8 @@ object GalleryIndexScheduler {
             ONE_TIME_NAME,
             ExistingWorkPolicy.REPLACE,
             oneTimeRequest(
-                isNewRun = true
+                isNewRun = true,
+                forceScan = forceScan
             )
         )
     }
@@ -52,7 +54,8 @@ object GalleryIndexScheduler {
                 ExistingWorkPolicy.REPLACE,
                 oneTimeRequest(
                     delaySeconds = 2,
-                    isNewRun = false
+                    isNewRun = false,
+                    forceScan = false
                 )
             )
     }
@@ -70,7 +73,8 @@ object GalleryIndexScheduler {
                 )
                 .setInputData(
                     workerInput(
-                        isNewRun = true
+                        isNewRun = true,
+                        forceScan = false
                     )
                 )
                 .build()
@@ -160,14 +164,16 @@ object GalleryIndexScheduler {
 
     private fun oneTimeRequest(
         delaySeconds: Long = 0,
-        isNewRun: Boolean
+        isNewRun: Boolean,
+        forceScan: Boolean
     ) = OneTimeWorkRequestBuilder<GalleryIndexWorker>()
         .setConstraints(
             baseConstraints()
         )
         .setInputData(
             workerInput(
-                isNewRun = isNewRun
+                isNewRun = isNewRun,
+                forceScan = forceScan
             )
         )
         .apply {
@@ -181,12 +187,17 @@ object GalleryIndexScheduler {
         .build()
 
     private fun workerInput(
-        isNewRun: Boolean
+        isNewRun: Boolean,
+        forceScan: Boolean
     ) =
         Data.Builder()
             .putBoolean(
                 GalleryIndexWorker.KEY_NEW_RUN,
                 isNewRun
+            )
+            .putBoolean(
+                GalleryIndexWorker.KEY_FORCE_SCAN,
+                forceScan
             )
             .build()
 
