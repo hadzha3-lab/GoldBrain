@@ -281,6 +281,9 @@ class HomeViewModel(
                         uri
                     )
 
+                repository
+                    .notifyIndexChanged()
+
                 container
                     .persistedMediaPermissionManager
                     .releaseReadGrant(
