@@ -117,9 +117,11 @@ class GalleryIndexWorker(
                 }
             }
 
-            repositoryMaintenance(
-                container
-            )
+            if (isNewRun) {
+                repositoryMaintenance(
+                    container
+                )
+            }
 
             val batch =
                 container.galleryIndexer
