@@ -7,12 +7,12 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "memories")
 data class MemoryEntity(
     @PrimaryKey val uri: String,
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long =
+        System.currentTimeMillis(),
     val category: String,
     val title: String,
     val ocrText: String,
     val labels: String,
-    val searchableText: String,
     @ColumnInfo(defaultValue = "1")
     val isAvailable: Boolean = true,
     @ColumnInfo(defaultValue = "0")
