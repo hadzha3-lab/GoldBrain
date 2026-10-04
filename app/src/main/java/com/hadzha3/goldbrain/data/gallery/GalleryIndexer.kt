@@ -1,6 +1,7 @@
 package com.hadzha3.goldbrain.data.gallery
 
 import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
+import com.hadzha3.goldbrain.data.repository.IndexLookupRepository
 import com.hadzha3.goldbrain.data.repository.MemoryIndexMaintenanceRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
 import kotlinx.coroutines.CancellationException
@@ -13,7 +14,9 @@ class GalleryIndexer(
     private val failureRepository:
         IndexFailureRepository,
     private val maintenanceRepository:
-        MemoryIndexMaintenanceRepository
+        MemoryIndexMaintenanceRepository,
+    private val lookupRepository:
+        IndexLookupRepository
 ) {
     data class Result(
         val indexed: Int,
@@ -22,17 +25,53 @@ class GalleryIndexer(
         val hasMore: Boolean
     )
 
+    private val candidateBuffer =
+        ArrayDeque<GalleryMediaItem>()
+
+    private var scanOffset =
+        0
+
+    private var scanReachedEnd =
+        false
+
     suspend fun pendingCount(): Int =
         mutex.withLock {
-            mediaSource
-                .countUnindexedImages(
-                    indexedUris =
-                        excludedUris()
-                )
+            resetScanState()
+
+            var pending =
+                0
+
+            mediaSource.scanImages(
+                startOffset = 0,
+                pageSize =
+                    LOOKUP_PAGE_SIZE
+            ) { page ->
+                val excluded =
+                    lookupRepository
+                        .excludedAmong(
+                            page.map {
+                                it.uri.toString()
+                            }
+                        )
+
+                pending +=
+                    page.count {
+                        it.uri.toString() !in
+                            excluded
+                    }
+
+                true
+            }
+
+            resetScanState()
+
+            pending
         }
 
     suspend fun clearIndex() =
         mutex.withLock {
+            resetScanState()
+
             repository.clearIndex()
             failureRepository.clearAll()
             maintenanceRepository
@@ -43,6 +82,12 @@ class GalleryIndexer(
         uri: String
     ) =
         mutex.withLock {
+            candidateBuffer
+                .removeAll {
+                    it.uri.toString() ==
+                        uri
+                }
+
             maintenanceRepository
                 .ignoreAndRemove(
                     uri
@@ -56,6 +101,7 @@ class GalleryIndexer(
 
     suspend fun retryFailures() =
         mutex.withLock {
+            resetScanState()
             failureRepository.clearAll()
         }
 
@@ -64,19 +110,31 @@ class GalleryIndexer(
             DEFAULT_BATCH_SIZE
     ): Result =
         mutex.withLock {
-            val candidates =
-                mediaSource
-                    .unindexedImages(
-                        indexedUris =
-                            excludedUris(),
-                        limit =
-                            batchSize
-                    )
+            fillCandidateBuffer(
+                required =
+                    batchSize
+            )
+
+            val batch =
+                ArrayList<GalleryMediaItem>(
+                    batchSize
+                )
+
+            repeat(
+                minOf(
+                    batchSize,
+                    candidateBuffer.size
+                )
+            ) {
+                batch +=
+                    candidateBuffer
+                        .removeFirst()
+            }
 
             var indexed = 0
             var failed = 0
 
-            candidates.forEach {
+            batch.forEach {
                     item ->
                 try {
                     repository.index(
@@ -113,28 +171,85 @@ class GalleryIndexer(
                 }
             }
 
+            val hasMore =
+                candidateBuffer
+                    .isNotEmpty() ||
+                    !scanReachedEnd
+
+            if (!hasMore) {
+                resetScanState()
+            }
+
             Result(
                 indexed = indexed,
                 failed = failed,
                 candidates =
-                    candidates.size,
+                    batch.size,
                 hasMore =
-                    candidates.size >=
-                        batchSize
+                    hasMore
             )
         }
 
-    private suspend fun excludedUris():
-        Set<String> =
-        repository.indexedUris() +
-            failureRepository
-                .deferredUris() +
-            maintenanceRepository
-                .ignoredUris()
+    private suspend fun fillCandidateBuffer(
+        required: Int
+    ) {
+        if (
+            candidateBuffer.size >=
+            required ||
+            scanReachedEnd
+        ) {
+            return
+        }
+
+        val scan =
+            mediaSource.scanImages(
+                startOffset =
+                    scanOffset,
+                pageSize =
+                    LOOKUP_PAGE_SIZE
+            ) { page ->
+                val excluded =
+                    lookupRepository
+                        .excludedAmong(
+                            page.map {
+                                it.uri.toString()
+                            }
+                        )
+
+                page
+                    .asSequence()
+                    .filter {
+                        it.uri.toString() !in
+                            excluded
+                    }
+                    .forEach(
+                        candidateBuffer::
+                            addLast
+                    )
+
+                candidateBuffer.size <
+                    required
+            }
+
+        scanOffset =
+            scan.nextOffset
+
+        scanReachedEnd =
+            scan.reachedEnd
+    }
+
+    private fun resetScanState() {
+        candidateBuffer.clear()
+        scanOffset = 0
+        scanReachedEnd = false
+    }
 
     companion object {
         const val DEFAULT_BATCH_SIZE =
             30
+
+        private const val LOOKUP_PAGE_SIZE =
+            250
 
         private val mutex =
             Mutex()
