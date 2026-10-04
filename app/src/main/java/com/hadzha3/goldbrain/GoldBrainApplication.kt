@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
-import coil3.memory.MemoryCache
 import com.hadzha3.goldbrain.di.AppContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,14 +46,6 @@ class GoldBrainApplication :
             .diskCache(
                 null
             )
-            .memoryCache {
-                MemoryCache.Builder()
-                    .maxSizePercent(
-                        context,
-                        0.08
-                    )
-                    .build()
-            }
             .build()
 }
 
