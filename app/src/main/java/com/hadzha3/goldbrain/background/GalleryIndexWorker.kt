@@ -36,6 +36,17 @@ class GalleryIndexWorker(
                 false
             )
 
+        if (
+            !MediaPermissions
+                .hasGalleryAccess(
+                    applicationContext
+                )
+        ) {
+            return stopForPermissionLoss(
+                container
+            )
+        }
+
         return try {
             if (isNewRun) {
                 val fullGalleryAccess =
@@ -187,12 +198,34 @@ class GalleryIndexWorker(
                 CancellationException
         ) {
             throw cancellation
+        } catch (_: SecurityException) {
+            stopForPermissionLoss(
+                container
+            )
         } catch (_: Exception) {
             statusRepository
                 .markError()
 
             Result.retry()
         }
+    }
+
+    private suspend fun stopForPermissionLoss(
+        container:
+            com.hadzha3.goldbrain.di.AppContainer
+    ): Result {
+        container.galleryIndexer
+            .abortScan()
+
+        container.mediaStoreChangeTracker
+            .invalidate()
+
+        container.indexStatusRepository
+            .reset()
+
+        return Result.success(
+            emptyOutput()
+        )
     }
 
     private suspend fun repositoryMaintenance(
