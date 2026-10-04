@@ -19,9 +19,6 @@ interface IgnoredMediaDao {
         uri: String
     )
 
-    @Query("SELECT uri FROM ignored_media")
-    suspend fun allUris(): List<String>
-
     @Query("DELETE FROM ignored_media")
     suspend fun clearAll()
 }
