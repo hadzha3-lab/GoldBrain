@@ -89,7 +89,17 @@ class MemorySearchEngine(
             normalize(item.category)
 
         val factSearchText =
-            factsSearchText(item)
+            if (
+                needsFactSearch(
+                    words
+                )
+            ) {
+                factsSearchText(
+                    item
+                )
+            } else {
+                ""
+            }
 
         val normalizedFactSearchText =
             normalize(factSearchText)
@@ -200,6 +210,16 @@ class MemorySearchEngine(
                 stemmed
             ).distinct()
     }
+
+    private fun needsFactSearch(
+        words: List<String>
+    ): Boolean =
+        words.any { word ->
+            FACT_INTENT_STEMS
+                .any(
+                    word::startsWith
+                )
+        }
 
     private fun factsSearchText(
         item: MemoryEntity
@@ -578,6 +598,22 @@ class MemorySearchEngine(
             "day",
             "before"
         )
+
+        val FACT_INTENT_STEMS =
+            listOf(
+                "стоил",
+                "цен",
+                "сумм",
+                "телефон",
+                "номер",
+                "почт",
+                "email",
+                "ссыл",
+                "сайт",
+                "url",
+                "дат",
+                "isbn"
+            )
 
         val STEM_SYNONYMS =
             mapOf(
