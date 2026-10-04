@@ -17,7 +17,7 @@ interface MemoryDao {
 
     @Query(
         "SELECT * FROM memories " +
-            "ORDER BY createdAt DESC " +
+            "ORDER BY createdAt DESC, uri DESC " +
             "LIMIT :limit"
     )
     fun observeRecent(
@@ -26,12 +26,29 @@ interface MemoryDao {
 
     @Query(
         "SELECT * FROM memories " +
-            "ORDER BY createdAt DESC " +
-            "LIMIT :limit OFFSET :offset"
+            "ORDER BY createdAt DESC, uri DESC " +
+            "LIMIT :limit"
     )
-    suspend fun page(
-        limit: Int,
-        offset: Int
+    suspend fun firstSearchPage(
+        limit: Int
+    ): List<MemoryEntity>
+
+    @Query(
+        """
+        SELECT * FROM memories
+        WHERE createdAt < :beforeCreatedAt
+           OR (
+                createdAt = :beforeCreatedAt
+                AND uri < :beforeUri
+           )
+        ORDER BY createdAt DESC, uri DESC
+        LIMIT :limit
+        """
+    )
+    suspend fun searchPageBefore(
+        beforeCreatedAt: Long,
+        beforeUri: String,
+        limit: Int
     ): List<MemoryEntity>
 
     @Query("SELECT * FROM memories WHERE uri = :uri LIMIT 1")
