@@ -48,7 +48,8 @@ class AppContainer(
 
     val localStorageManager: LocalStorageManager by lazy {
         LocalStorageManager(
-            appContext
+            context = appContext,
+            database = database
         )
     }
 
