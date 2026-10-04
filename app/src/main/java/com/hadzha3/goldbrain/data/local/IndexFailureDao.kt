@@ -29,14 +29,6 @@ interface IndexFailureDao {
     )
 
     @Query(
-        "SELECT uri FROM index_failures " +
-            "WHERE nextRetryAt > :now"
-    )
-    suspend fun deferredUris(
-        now: Long
-    ): List<String>
-
-    @Query(
         "SELECT COUNT(*) " +
             "FROM index_failures"
     )
