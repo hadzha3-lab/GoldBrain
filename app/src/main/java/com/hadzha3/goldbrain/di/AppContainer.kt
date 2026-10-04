@@ -7,6 +7,7 @@ import com.hadzha3.goldbrain.data.gallery.GalleryIndexer
 import com.hadzha3.goldbrain.data.gallery.MediaStoreGalleryMediaSource
 import com.hadzha3.goldbrain.data.local.AppDatabase
 import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
+import com.hadzha3.goldbrain.data.media.MediaStoreChangeTracker
 import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
 import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
@@ -53,6 +54,13 @@ class AppContainer(
             database = database
         )
     }
+
+    val mediaStoreChangeTracker:
+        MediaStoreChangeTracker by lazy {
+            MediaStoreChangeTracker(
+                appContext
+            )
+        }
 
     val persistedMediaPermissionManager:
         PersistedMediaPermissionManager by lazy {
