@@ -39,15 +39,6 @@ class MemorySearchScaleTest {
                                 "Headphones, Blue"
                             } else {
                                 "Landscape"
-                            },
-                        searchableText =
-                            if (
-                                index ==
-                                targetIndex
-                            ) {
-                                "headphones blue"
-                            } else {
-                                "landscape"
                             }
                     )
                 }
