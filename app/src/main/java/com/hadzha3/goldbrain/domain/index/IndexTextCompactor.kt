@@ -2,10 +2,10 @@ package com.hadzha3.goldbrain.domain.index
 
 object IndexTextCompactor {
     const val MAX_OCR_CHARS =
-        4_096
+        2_048
 
     private const val OCR_HEAD_CHARS =
-        3_072
+        1_536
 
     private const val LABEL_LIMIT =
         8
