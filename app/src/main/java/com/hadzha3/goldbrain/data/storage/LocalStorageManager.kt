@@ -28,6 +28,10 @@ class LocalStorageManager(
                 File(
                     database.path +
                         "-shm"
+                ),
+                File(
+                    database.path +
+                        "-journal"
                 )
             ).sumOf(
                 ::safeLength
