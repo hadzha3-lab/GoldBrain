@@ -369,12 +369,6 @@ class MemorySearchEngineTest {
         title = title,
         ocrText = text,
         labels = labels,
-        searchableText = listOf(
-            category,
-            title,
-            text,
-            labels
-        ).joinToString(" ").lowercase(),
         userNote = note
     )
 
