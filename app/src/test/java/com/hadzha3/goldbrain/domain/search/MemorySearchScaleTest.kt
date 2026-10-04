@@ -45,6 +45,81 @@ class MemorySearchScaleTest {
     }
 
     @Test
+    fun pagedMergeMatchesWholeListRanking() {
+        val items =
+            (0 until 5_000)
+                .map { index ->
+                    MemoryEntity(
+                        uri =
+                            "memory-$index",
+                        createdAt =
+                            index.toLong(),
+                        category =
+                            if (
+                                index % 11 == 0
+                            ) {
+                                "Чек"
+                            } else {
+                                "Память"
+                            },
+                        title =
+                            "Фото $index",
+                        ocrText =
+                            if (
+                                index % 17 == 0
+                            ) {
+                                "ИТОГО ${index * 10} ₽"
+                            } else {
+                                ""
+                            },
+                        labels =
+                            when {
+                                index == 4_321 ->
+                                    "Headphones, Blue"
+
+                                index % 13 == 0 ->
+                                    "Headphones"
+
+                                else ->
+                                    "Landscape"
+                            }
+                    )
+                }
+
+        val engine =
+            MemorySearchEngine()
+
+        val whole =
+            engine.search(
+                items,
+                "синие наушники"
+            )
+
+        val paged =
+            items.chunked(
+                250
+            ).fold(
+                emptyList<MemoryEntity>()
+            ) {
+                    best,
+                    page ->
+                engine.search(
+                    best + page,
+                    "синие наушники"
+                )
+            }
+
+        assertEquals(
+            whole.map {
+                it.uri
+            },
+            paged.map {
+                it.uri
+            }
+        )
+    }
+
+    @Test
     fun findsTargetAmongThousandsOfMemories() {
         val targetIndex =
             3_777
