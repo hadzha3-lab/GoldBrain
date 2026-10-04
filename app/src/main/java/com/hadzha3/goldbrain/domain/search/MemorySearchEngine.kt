@@ -2,6 +2,8 @@ package com.hadzha3.goldbrain.domain.search
 
 import com.hadzha3.goldbrain.data.local.MemoryEntity
 import com.hadzha3.goldbrain.domain.facts.MemoryFactsExtractor
+import com.hadzha3.goldbrain.domain.source.PhotoSourceQueryParser
+import com.hadzha3.goldbrain.domain.source.PhotoSourceType
 import java.text.Normalizer
 import java.util.Calendar
 
@@ -26,6 +28,12 @@ class MemorySearchEngine(
         val temporalFilter =
             buildTemporalFilter(normalizedQuery)
 
+        val sourceFilter =
+            PhotoSourceQueryParser
+                .filterFor(
+                    normalizedQuery
+                )
+
         val words = normalizedQuery
             .split(WHITESPACE)
             .asSequence()
@@ -33,6 +41,10 @@ class MemorySearchEngine(
             .filter { it.length >= MIN_TERM_LENGTH }
             .filterNot(STOP_WORDS::contains)
             .filterNot(TEMPORAL_WORDS::contains)
+            .filterNot(
+                PhotoSourceQueryParser::
+                    isSourceIntentWord
+            )
             .distinct()
             .toList()
 
@@ -45,8 +57,21 @@ class MemorySearchEngine(
                 }
             }
 
+        val sourceFiltered =
+            if (sourceFilter == null) {
+                dateFiltered
+            } else {
+                dateFiltered.filter {
+                        item ->
+                    PhotoSourceType
+                        .fromStored(
+                            item.sourceType
+                        ) in sourceFilter
+                }
+            }
+
         if (words.isEmpty()) {
-            return dateFiltered
+            return sourceFiltered
                 .sortedByDescending {
                     it.createdAt
                 }
@@ -55,7 +80,7 @@ class MemorySearchEngine(
                 )
         }
 
-        return dateFiltered
+        return sourceFiltered
             .mapNotNull { item ->
                 score(
                     item = item,
@@ -112,6 +137,13 @@ class MemorySearchEngine(
                     item.ocrText,
                     item.labels,
                     item.userNote,
+                    PhotoSourceQueryParser
+                        .searchableText(
+                            PhotoSourceType
+                                .fromStored(
+                                    item.sourceType
+                                )
+                        ),
                     factSearchText
                 ).joinToString(" ")
             )
