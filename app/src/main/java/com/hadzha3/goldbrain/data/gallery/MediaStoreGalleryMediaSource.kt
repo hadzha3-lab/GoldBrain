@@ -3,133 +3,167 @@ package com.hadzha3.goldbrain.data.gallery
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MediaStoreGalleryMediaSource(
     private val context: Context
 ) : GalleryMediaSource {
-    override fun unindexedImages(
-        indexedUris: Set<String>,
-        limit: Int
-    ): List<GalleryMediaItem> {
-        val result =
-            ArrayList<GalleryMediaItem>(
-                limit
-            )
-
-        queryImages { uri, createdAt ->
-            if (
-                uri.toString() !in indexedUris &&
-                result.size < limit
-            ) {
-                result +=
-                    GalleryMediaItem(
-                        uri = uri,
-                        createdAt = createdAt
-                    )
-            }
-
-            result.size < limit
-        }
-
-        return result
-    }
-
-    override fun countUnindexedImages(
-        indexedUris: Set<String>
-    ): Int {
-        var count = 0
-
-        queryImages { uri, _ ->
-            if (
-                uri.toString() !in indexedUris
-            ) {
-                count++
-            }
-            true
-        }
-
-        return count
-    }
-
-    private inline fun queryImages(
-        consume: (
-            android.net.Uri,
-            Long
-        ) -> Boolean
-    ) {
-        val projection = arrayOf(
-            MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.DATE_TAKEN,
-            MediaStore.Images.Media.DATE_ADDED
-        )
-
-        context.contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            null,
-            null,
-            "${MediaStore.Images.Media.DATE_ADDED} DESC"
-        )?.use { cursor ->
-            val idColumn =
-                cursor.getColumnIndexOrThrow(
-                    MediaStore.Images.Media._ID
-                )
-
-            val takenColumn =
-                cursor.getColumnIndexOrThrow(
-                    MediaStore.Images.Media.DATE_TAKEN
-                )
-
-            val addedColumn =
-                cursor.getColumnIndexOrThrow(
+    override suspend fun scanImages(
+        startOffset: Int,
+        pageSize: Int,
+        onPage:
+            suspend (
+                List<GalleryMediaItem>
+            ) -> Boolean
+    ): GalleryScanResult =
+        withContext(
+            Dispatchers.IO
+        ) {
+            val projection =
+                arrayOf(
+                    MediaStore.Images.Media._ID,
+                    MediaStore.Images.Media.DATE_TAKEN,
                     MediaStore.Images.Media.DATE_ADDED
                 )
 
-            while (
-                cursor.moveToNext()
-            ) {
-                val id =
-                    cursor.getLong(
-                        idColumn
-                    )
-
-                val uri =
-                    ContentUris.withAppendedId(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        id
-                    )
-
-                val dateTaken =
-                    cursor.getLong(
-                        takenColumn
-                    )
-
-                val dateAddedSeconds =
-                    cursor.getLong(
-                        addedColumn
-                    )
-
-                val createdAt =
-                    when {
-                        dateTaken > 0L ->
-                            dateTaken
-
-                        dateAddedSeconds > 0L ->
-                            dateAddedSeconds * 1000L
-
-                        else ->
-                            System.currentTimeMillis()
-                    }
-
+            context.contentResolver.query(
+                MediaStore.Images.Media
+                    .EXTERNAL_CONTENT_URI,
+                projection,
+                null,
+                null,
+                "${MediaStore.Images.Media.DATE_ADDED} DESC"
+            )?.use { cursor ->
                 if (
-                    !consume(
-                        uri,
-                        createdAt
+                    startOffset > 0 &&
+                    !cursor.moveToPosition(
+                        startOffset - 1
                     )
                 ) {
-                    break
+                    return@withContext
+                        GalleryScanResult(
+                            nextOffset =
+                                startOffset,
+                            reachedEnd =
+                                true
+                        )
                 }
+
+                val idColumn =
+                    cursor.getColumnIndexOrThrow(
+                        MediaStore.Images.Media._ID
+                    )
+
+                val takenColumn =
+                    cursor.getColumnIndexOrThrow(
+                        MediaStore.Images.Media.DATE_TAKEN
+                    )
+
+                val addedColumn =
+                    cursor.getColumnIndexOrThrow(
+                        MediaStore.Images.Media.DATE_ADDED
+                    )
+
+                var nextOffset =
+                    startOffset
+
+                val page =
+                    ArrayList<GalleryMediaItem>(
+                        pageSize
+                    )
+
+                while (
+                    cursor.moveToNext()
+                ) {
+                    val id =
+                        cursor.getLong(
+                            idColumn
+                        )
+
+                    val uri =
+                        ContentUris
+                            .withAppendedId(
+                                MediaStore.Images.Media
+                                    .EXTERNAL_CONTENT_URI,
+                                id
+                            )
+
+                    val dateTaken =
+                        cursor.getLong(
+                            takenColumn
+                        )
+
+                    val dateAddedSeconds =
+                        cursor.getLong(
+                            addedColumn
+                        )
+
+                    val createdAt =
+                        when {
+                            dateTaken > 0L ->
+                                dateTaken
+
+                            dateAddedSeconds > 0L ->
+                                dateAddedSeconds *
+                                    1000L
+
+                            else ->
+                                System.currentTimeMillis()
+                        }
+
+                    page +=
+                        GalleryMediaItem(
+                            uri = uri,
+                            createdAt =
+                                createdAt
+                        )
+
+                    nextOffset++
+
+                    if (
+                        page.size >=
+                        pageSize
+                    ) {
+                        val shouldContinue =
+                            onPage(
+                                page.toList()
+                            )
+
+                        page.clear()
+
+                        if (!shouldContinue) {
+                            return@withContext
+                                GalleryScanResult(
+                                    nextOffset =
+                                        nextOffset,
+                                    reachedEnd =
+                                        cursor.isLast
+                                )
+                        }
+                    }
+                }
+
+                if (
+                    page.isNotEmpty()
+                ) {
+                    onPage(
+                        page.toList()
+                    )
+                }
+
+                GalleryScanResult(
+                    nextOffset =
+                        nextOffset,
+                    reachedEnd =
+                        true
+                )
             }
+                ?: GalleryScanResult(
+                    nextOffset =
+                        startOffset,
+                    reachedEnd =
+                        true
+                )
         }
-    }
 }
