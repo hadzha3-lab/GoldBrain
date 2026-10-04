@@ -46,14 +46,16 @@ object GalleryIndexScheduler {
     }
 
     fun continueSoon(
-        context: Context
+        context: Context,
+        delaySeconds: Long
     ) {
         WorkManager.getInstance(context)
             .enqueueUniqueWork(
                 CONTINUATION_NAME,
                 ExistingWorkPolicy.REPLACE,
                 oneTimeRequest(
-                    delaySeconds = 2,
+                    delaySeconds =
+                        delaySeconds,
                     isNewRun = false,
                     forceScan = false
                 )
