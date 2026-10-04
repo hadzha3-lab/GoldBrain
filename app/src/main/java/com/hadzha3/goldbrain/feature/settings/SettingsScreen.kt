@@ -41,6 +41,7 @@ fun SettingsScreen(
     onIndexNow: () -> Unit,
     onRecheckOriginals: () -> Unit,
     onRetryFailedPhotos: () -> Unit,
+    onOptimizeIndex: () -> Unit,
     onClearTemporaryCache: () -> Unit,
     onClearIndex: () -> Unit
 ) {
@@ -297,6 +298,20 @@ fun SettingsScreen(
                 Text(
                     stringResource(
                         R.string.settings_retry_failed
+                    )
+                )
+            }
+
+            OutlinedButton(
+                onClick =
+                    onOptimizeIndex,
+                enabled =
+                    state.indexBytes > 0L &&
+                        !state.isIndexing
+            ) {
+                Text(
+                    stringResource(
+                        R.string.settings_optimize_index
                     )
                 )
             }
