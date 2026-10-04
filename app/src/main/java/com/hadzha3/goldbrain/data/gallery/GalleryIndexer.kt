@@ -140,7 +140,9 @@ class GalleryIndexer(
                     repository.index(
                         uri = item.uri,
                         createdAt =
-                            item.createdAt
+                            item.createdAt,
+                        source =
+                            item.source
                     )
 
                     failureRepository
