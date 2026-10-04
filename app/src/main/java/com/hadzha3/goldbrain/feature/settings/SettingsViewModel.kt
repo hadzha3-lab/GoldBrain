@@ -141,6 +141,23 @@ class SettingsViewModel(
         }
     }
 
+    fun optimizeIndex() {
+        viewModelScope.launch(
+            Dispatchers.IO
+        ) {
+            runCatching {
+                container
+                    .localStorageManager
+                    .optimizeIndex()
+            }
+
+            storageUsage.value =
+                container
+                    .localStorageManager
+                    .usage()
+        }
+    }
+
     fun clearTemporaryCache() {
         viewModelScope.launch(
             Dispatchers.IO
@@ -287,7 +304,20 @@ class SettingsViewModel(
                 .persistedMediaPermissionManager
                 .releaseAllReadGrants()
 
-            refreshStorage()
+            launch(
+                Dispatchers.IO
+            ) {
+                runCatching {
+                    container
+                        .localStorageManager
+                        .optimizeIndex()
+                }
+
+                storageUsage.value =
+                    container
+                        .localStorageManager
+                        .usage()
+            }
         }
     }
 
