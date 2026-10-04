@@ -74,6 +74,7 @@
     <string name="settings_index_now">Индексировать сейчас</string>
     <string name="settings_recheck">Проверить доступность оригиналов</string>
     <string name="settings_retry_failed">Повторить проблемные фото сейчас</string>
+    <string name="settings_optimize_index">Сжать индекс</string>
     <string name="settings_clear_cache">Очистить временный кэш</string>
 
     <string name="settings_privacy_title">Хранение и приватность</string>
