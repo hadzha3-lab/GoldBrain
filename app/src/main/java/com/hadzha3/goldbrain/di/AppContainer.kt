@@ -10,6 +10,7 @@ import com.hadzha3.goldbrain.data.media.AndroidMediaAccessChecker
 import com.hadzha3.goldbrain.data.media.PersistedMediaPermissionManager
 import com.hadzha3.goldbrain.data.preferences.IndexingPreferences
 import com.hadzha3.goldbrain.data.repository.IndexFailureRepository
+import com.hadzha3.goldbrain.data.repository.IndexLookupRepository
 import com.hadzha3.goldbrain.data.repository.IndexStatusRepository
 import com.hadzha3.goldbrain.data.repository.MemoryIndexMaintenanceRepository
 import com.hadzha3.goldbrain.data.repository.MemoryRepository
@@ -89,6 +90,12 @@ class AppContainer(
         )
     }
 
+    val indexLookupRepository: IndexLookupRepository by lazy {
+        IndexLookupRepository(
+            dao = database.indexLookupDao()
+        )
+    }
+
     val indexRecoveryCoordinator:
         IndexRecoveryCoordinator by lazy {
             IndexRecoveryCoordinator(
@@ -115,7 +122,9 @@ class AppContainer(
             failureRepository =
                 indexFailureRepository,
             maintenanceRepository =
-                memoryIndexMaintenanceRepository
+                memoryIndexMaintenanceRepository,
+            lookupRepository =
+                indexLookupRepository
         )
     }
 }
