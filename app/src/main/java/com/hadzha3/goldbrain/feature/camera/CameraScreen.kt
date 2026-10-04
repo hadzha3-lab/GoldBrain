@@ -66,6 +66,10 @@ fun CameraScreen(
         mutableStateOf<String?>(null)
     }
 
+    var isCapturing by remember {
+        mutableStateOf(false)
+    }
+
     val cameraOpenError =
         stringResource(R.string.camera_open_error)
     val cameraSaveError =
@@ -157,14 +161,28 @@ fun CameraScreen(
                 .fillMaxWidth()
                 .padding(20.dp),
             isReady = isReady,
+            isCapturing = isCapturing,
             errorText = errorText,
             onCapture = {
+                if (isCapturing) {
+                    return@CameraControls
+                }
+
+                isCapturing = true
+                errorText = null
+
                 CameraCapture.saveNewCapture(
                     context = context,
                     imageCapture = imageCapture,
                     executor = executor,
-                    onSaved = onSaved,
+                    onSaved = { uri ->
+                        onSaved(
+                            uri
+                        )
+                    },
                     onError = { error ->
+                        isCapturing = false
+
                         errorText = when (error) {
                             is MissingSavedUriException ->
                                 cameraUriError
@@ -184,6 +202,7 @@ fun CameraScreen(
 private fun CameraControls(
     modifier: Modifier,
     isReady: Boolean,
+    isCapturing: Boolean,
     errorText: String?,
     onCapture: () -> Unit,
     onClose: () -> Unit
@@ -201,15 +220,25 @@ private fun CameraControls(
         }
 
         Button(
-            enabled = isReady,
+            enabled =
+                isReady &&
+                    !isCapturing,
             onClick = onCapture
         ) {
             Text(
-                stringResource(R.string.camera_capture)
+                stringResource(
+                    if (isCapturing) {
+                        R.string.camera_saving
+                    } else {
+                        R.string.camera_capture
+                    }
+                )
             )
         }
 
         OutlinedButton(
+            enabled =
+                !isCapturing,
             onClick = onClose
         ) {
             Text(
