@@ -23,6 +23,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
 import com.hadzha3.goldbrain.feature.camera.CameraActivity
