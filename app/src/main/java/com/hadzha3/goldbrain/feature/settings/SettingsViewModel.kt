@@ -184,6 +184,10 @@ class SettingsViewModel(
             accessMode.value ==
             GalleryAccessMode.NONE
         ) {
+            container
+                .mediaStoreChangeTracker
+                .invalidate()
+
             GalleryIndexScheduler
                 .cancelAll(
                     getApplication()
