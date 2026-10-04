@@ -164,10 +164,6 @@ fun CameraScreen(
             isCapturing = isCapturing,
             errorText = errorText,
             onCapture = {
-                if (isCapturing) {
-                    return@CameraControls
-                }
-
                 isCapturing = true
                 errorText = null
 
