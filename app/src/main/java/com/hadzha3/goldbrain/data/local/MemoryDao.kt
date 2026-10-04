@@ -15,6 +15,15 @@ interface MemoryDao {
     @Query("SELECT * FROM memories ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<MemoryEntity>>
 
+    @Query(
+        "SELECT * FROM memories " +
+            "ORDER BY createdAt DESC " +
+            "LIMIT :limit"
+    )
+    fun observeRecent(
+        limit: Int
+    ): Flow<List<MemoryEntity>>
+
     @Query("SELECT * FROM memories WHERE uri = :uri LIMIT 1")
     fun observeByUri(
         uri: String
