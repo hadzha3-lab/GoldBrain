@@ -7,13 +7,18 @@ data class GalleryMediaItem(
     val createdAt: Long
 )
 
-interface GalleryMediaSource {
-    fun unindexedImages(
-        indexedUris: Set<String>,
-        limit: Int
-    ): List<GalleryMediaItem>
+data class GalleryScanResult(
+    val nextOffset: Int,
+    val reachedEnd: Boolean
+)
 
-    fun countUnindexedImages(
-        indexedUris: Set<String>
-    ): Int
+interface GalleryMediaSource {
+    suspend fun scanImages(
+        startOffset: Int,
+        pageSize: Int,
+        onPage:
+            suspend (
+                List<GalleryMediaItem>
+            ) -> Boolean
+    ): GalleryScanResult
 }
