@@ -135,12 +135,15 @@ class MemoryRepository(
             )
 
         uris.forEach { uriString ->
+            val uri =
+                Uri.parse(
+                    uriString
+                )
+
             val available =
                 mediaAccessChecker
                     .isAvailable(
-                        Uri.parse(
-                            uriString
-                        )
+                        uri
                     )
 
             dao.updateAvailability(
@@ -149,6 +152,25 @@ class MemoryRepository(
                     available,
                 verifiedAt = now
             )
+
+            if (available) {
+                val source =
+                    sourceDetector.detect(
+                        uri
+                    )
+
+                if (
+                    source.confidence > 0
+                ) {
+                    dao.updateSourceIfBetter(
+                        uri = uriString,
+                        sourceType =
+                            source.type.name,
+                        sourceConfidence =
+                            source.confidence
+                    )
+                }
+            }
         }
 
         if (uris.isNotEmpty()) {
