@@ -159,7 +159,7 @@ fun CameraScreen(
             isReady = isReady,
             errorText = errorText,
             onCapture = {
-                CameraCapture.saveToGallery(
+                CameraCapture.saveNewCapture(
                     context = context,
                     imageCapture = imageCapture,
                     executor = executor,
