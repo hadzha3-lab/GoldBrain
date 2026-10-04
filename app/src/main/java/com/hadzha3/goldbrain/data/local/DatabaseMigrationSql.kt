@@ -152,5 +152,23 @@ object DatabaseMigrationSql {
                         "ALTER TABLE memories_compact RENAME TO memories"
                     )
             )
+,
+            SqlMigrationStep(
+                fromVersion = 7,
+                toVersion = 8,
+                statements =
+                    listOf(
+                        """
+                        ALTER TABLE memories
+                        ADD COLUMN sourceType TEXT
+                        NOT NULL DEFAULT 'UNKNOWN'
+                        """.trimIndent(),
+                        """
+                        ALTER TABLE memories
+                        ADD COLUMN sourceConfidence INTEGER
+                        NOT NULL DEFAULT 0
+                        """.trimIndent()
+                    )
+            )
         )
 }
