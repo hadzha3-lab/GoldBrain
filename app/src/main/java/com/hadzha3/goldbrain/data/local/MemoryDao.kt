@@ -23,7 +23,7 @@ interface MemoryDao {
 
     @Query(
         "SELECT * FROM memories " +
-            "ORDER BY createdAt DESC, uri DESC " +
+            "ORDER BY uri DESC " +
             "LIMIT :limit"
     )
     suspend fun firstSearchPage(
@@ -33,17 +33,12 @@ interface MemoryDao {
     @Query(
         """
         SELECT * FROM memories
-        WHERE createdAt < :beforeCreatedAt
-           OR (
-                createdAt = :beforeCreatedAt
-                AND uri < :beforeUri
-           )
-        ORDER BY createdAt DESC, uri DESC
+        WHERE uri < :beforeUri
+        ORDER BY uri DESC
         LIMIT :limit
         """
     )
     suspend fun searchPageBefore(
-        beforeCreatedAt: Long,
         beforeUri: String,
         limit: Int
     ): List<MemoryEntity>
