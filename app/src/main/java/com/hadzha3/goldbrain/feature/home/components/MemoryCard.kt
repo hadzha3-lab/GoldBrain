@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.data.local.MemoryEntity
+import com.hadzha3.goldbrain.feature.source.isKnownPhotoSource
+import com.hadzha3.goldbrain.feature.source.photoSourceLabel
 
 @Composable
 fun MemoryCard(
@@ -51,8 +53,20 @@ fun MemoryCard(
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Text(
-                    text = item.category,
-                    style = MaterialTheme.typography.labelMedium
+                    text =
+                        if (
+                            isKnownPhotoSource(
+                                item.sourceType
+                            )
+                        ) {
+                            "${item.category} · ${photoSourceLabel(item.sourceType)}"
+                        } else {
+                            item.category
+                        },
+                    style =
+                        MaterialTheme
+                            .typography
+                            .labelMedium
                 )
 
                 Text(
