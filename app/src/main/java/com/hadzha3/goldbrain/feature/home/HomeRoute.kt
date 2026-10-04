@@ -326,6 +326,9 @@ fun HomeRoute(
             onRetryFailedPhotos =
                 settingsViewModel::
                     retryFailedPhotos,
+            onOptimizeIndex =
+                settingsViewModel::
+                    optimizeIndex,
             onClearTemporaryCache =
                 settingsViewModel::
                     clearTemporaryCache,
