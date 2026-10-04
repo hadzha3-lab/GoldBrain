@@ -75,101 +75,114 @@ class AndroidPhotoSourceDetector(
                 }
             }.toTypedArray()
 
-        return runCatching {
-            context.contentResolver
-                .query(
-                    uri,
-                    projection,
-                    null,
-                    null,
-                    null
-                )
-                ?.use { cursor ->
-                    if (
-                        !cursor.moveToFirst()
-                    ) {
-                        return@use
-                            PhotoSourceMetadata()
-                    }
-
-                    PhotoSourceMetadata(
-                        displayName =
-                            cursor.stringOrNull(
-                                MediaStore.MediaColumns
-                                    .DISPLAY_NAME
-                            ),
-                        relativePath =
-                            if (
-                                Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.Q
-                            ) {
-                                cursor.stringOrNull(
-                                    MediaStore.MediaColumns
-                                        .RELATIVE_PATH
-                                )
-                            } else {
-                                null
-                            },
-                        bucketDisplayName =
-                            cursor.stringOrNull(
-                                MediaStore.MediaColumns
-                                    .BUCKET_DISPLAY_NAME
-                            ),
-                        ownerPackageName =
-                            if (
-                                Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.Q
-                            ) {
-                                cursor.stringOrNull(
-                                    MediaStore.MediaColumns
-                                        .OWNER_PACKAGE_NAME
-                                )
-                            } else {
-                                null
-                            }
+        val cursor =
+            try {
+                context.contentResolver
+                    .query(
+                        uri,
+                        projection,
+                        null,
+                        null,
+                        null
                     )
-                }
-        }.getOrNull()
-            ?: queryGeneric(
-                uri
-            )
+            } catch (_: Exception) {
+                null
+            }
+                ?: return queryGeneric(
+                    uri
+                )
+
+        return cursor.use {
+            if (
+                !it.moveToFirst()
+            ) {
+                PhotoSourceMetadata()
+            } else {
+                PhotoSourceMetadata(
+                    displayName =
+                        it.stringOrNull(
+                            MediaStore.MediaColumns
+                                .DISPLAY_NAME
+                        ),
+                    relativePath =
+                        if (
+                            Build.VERSION.SDK_INT >=
+                            Build.VERSION_CODES.Q
+                        ) {
+                            it.stringOrNull(
+                                MediaStore.MediaColumns
+                                    .RELATIVE_PATH
+                            )
+                        } else {
+                            null
+                        },
+                    bucketDisplayName =
+                        it.stringOrNull(
+                            MediaStore.MediaColumns
+                                .BUCKET_DISPLAY_NAME
+                        ),
+                    ownerPackageName =
+                        if (
+                            Build.VERSION.SDK_INT >=
+                            Build.VERSION_CODES.Q
+                        ) {
+                            it.stringOrNull(
+                                MediaStore.MediaColumns
+                                    .OWNER_PACKAGE_NAME
+                            )
+                        } else {
+                            null
+                        }
+                )
+            }
+        }
     }
 
     private fun queryGeneric(
         uri: Uri
-    ): PhotoSourceMetadata =
-        runCatching {
-            context.contentResolver
-                .query(
-                    uri,
-                    arrayOf(
-                        OpenableColumns.DISPLAY_NAME
-                    ),
-                    null,
-                    null,
-                    null
-                )
-                ?.use { cursor ->
-                    if (
-                        !cursor.moveToFirst()
-                    ) {
-                        return@use
-                            PhotoSourceMetadata()
-                    }
-
-                    PhotoSourceMetadata(
-                        displayName =
-                            cursor.stringOrNull(
-                                OpenableColumns
-                                    .DISPLAY_NAME
-                            )
+    ): PhotoSourceMetadata {
+        val cursor =
+            try {
+                context.contentResolver
+                    .query(
+                        uri,
+                        arrayOf(
+                            OpenableColumns
+                                .DISPLAY_NAME
+                        ),
+                        null,
+                        null,
+                        null
                     )
-                }
-        }.getOrNull()
-            ?: PhotoSourceMetadata(
-                authority =
-                    uri.authority
-            )
+            } catch (_: Exception) {
+                null
+            }
+                ?: return PhotoSourceMetadata(
+                    authority =
+                        uri.authority
+                )
+
+        return cursor.use {
+            if (
+                !it.moveToFirst()
+            ) {
+                PhotoSourceMetadata(
+                    authority =
+                        uri.authority
+                )
+            } else {
+                PhotoSourceMetadata(
+                    authority =
+                        uri.authority,
+                    displayName =
+                        it.stringOrNull(
+                            OpenableColumns
+                                .DISPLAY_NAME
+                        )
+                )
+            }
+        }
+    }
 
     private fun android.database.Cursor
         .stringOrNull(
