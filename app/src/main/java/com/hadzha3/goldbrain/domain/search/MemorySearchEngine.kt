@@ -96,7 +96,6 @@ class MemorySearchEngine(
                     item.ocrText,
                     item.labels,
                     item.userNote,
-                    item.searchableText,
                     factSearchText
                 ).joinToString(" ")
             )
