@@ -35,6 +35,14 @@
     <string name="detail_original_unavailable_hint">GoldBrain сохраняет распознанный текст и описание, поэтому память остаётся доступной для поиска.</string>
     <string name="detail_labels">Что распознано</string>
     <string name="detail_recognized_text">Распознанный текст</string>
+    <string name="detail_source">Источник</string>
+    <string name="detail_source_confidence">Уверенность определения: %1$d%%</string>
+    <string name="photo_source_camera">Снято камерой</string>
+    <string name="photo_source_download">Скачано</string>
+    <string name="photo_source_screenshot">Скриншот</string>
+    <string name="photo_source_messenger">Из мессенджера</string>
+    <string name="photo_source_goldbrain">Снято в GoldBrain</string>
+    <string name="photo_source_unknown">Источник не определён</string>
     <string name="detail_facts">Полезные данные</string>
     <string name="fact_money">Сумма</string>
     <string name="fact_email">E-mail</string>
