@@ -34,6 +34,10 @@ jobs:
         shell: bash
         run: bash scripts/check-media-readonly.sh
 
+      - name: Verify local-data backup privacy
+        shell: bash
+        run: bash scripts/check-local-data-privacy.sh
+
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
