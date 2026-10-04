@@ -123,11 +123,16 @@ class GalleryIndexWorker(
                 )
             }
 
+            val loadPolicy =
+                container
+                    .indexingLoadProvider
+                    .current()
+
             val batch =
                 container.galleryIndexer
                     .indexNextBatch(
-                        GalleryIndexer
-                            .DEFAULT_BATCH_SIZE
+                        loadPolicy
+                            .batchSize
                     )
 
             val output =
@@ -163,7 +168,11 @@ class GalleryIndexWorker(
             if (shouldContinue) {
                 GalleryIndexScheduler
                     .continueSoon(
-                        applicationContext
+                        context =
+                            applicationContext,
+                        delaySeconds =
+                            loadPolicy
+                                .continuationDelaySeconds
                     )
             } else {
                 container
