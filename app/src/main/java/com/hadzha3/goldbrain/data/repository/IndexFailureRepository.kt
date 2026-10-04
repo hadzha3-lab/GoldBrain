@@ -12,11 +12,6 @@ class IndexFailureRepository(
     fun count(): Flow<Int> =
         dao.observeCount()
 
-    suspend fun deferredUris(): Set<String> =
-        dao.deferredUris(
-            nowProvider()
-        ).toHashSet()
-
     suspend fun recordFailure(
         uri: String,
         error: Throwable
