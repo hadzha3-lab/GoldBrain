@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @OptIn(FlowPreview::class)
 class HomeViewModel(
@@ -49,6 +51,9 @@ class HomeViewModel(
 
     private val selectedUri =
         MutableStateFlow<String?>(null)
+
+    private val selectedIndexMutex =
+        Mutex()
 
     private val _detailActionState =
         MutableStateFlow(
@@ -325,67 +330,85 @@ class HomeViewModel(
             return@launch
         }
 
-        localIndexing.value =
-            true
+        selectedIndexMutex
+            .withLock {
+                localIndexing.value =
+                    true
 
-        var failed = 0
+                var failed = 0
 
-        uris.forEachIndexed {
-                index,
-                uri ->
-            localStatus.value =
-                getApplication<Application>()
-                    .getString(
-                        R.string.index_progress,
-                        index + 1,
-                        uris.size
+                try {
+                    uris.forEachIndexed {
+                            index,
+                            uri ->
+                        localStatus.value =
+                            getApplication<Application>()
+                                .getString(
+                                    R.string.index_progress,
+                                    index + 1,
+                                    uris.size
+                                )
+
+                        try {
+                            container
+                                .memoryIndexMaintenanceRepository
+                                .allow(
+                                    uri.toString()
+                                )
+
+                            repository.index(
+                                uri
+                            )
+                        } catch (
+                            cancellation:
+                                CancellationException
+                        ) {
+                            throw cancellation
+                        } catch (_: Exception) {
+                            failed++
+                        }
+                    }
+
+                    val finalStatus =
+                        if (failed == 0) {
+                            getApplication<Application>()
+                                .getString(
+                                    R.string.index_done
+                                )
+                        } else {
+                            getApplication<Application>()
+                                .getString(
+                                    R.string.index_done_with_errors,
+                                    failed
+                                )
+                        }
+
+                    localStatus.value =
+                        finalStatus
+
+                    delay(
+                        LOCAL_STATUS_DURATION_MS
                     )
 
-            runCatching {
-                container
-                    .memoryIndexMaintenanceRepository
-                    .allow(
-                        uri.toString()
-                    )
+                    if (
+                        localStatus.value ==
+                        finalStatus
+                    ) {
+                        localStatus.value = ""
+                    }
+                } catch (
+                    cancellation:
+                        CancellationException
+                ) {
+                    localStatus.value =
+                        ""
 
-                repository.index(
-                    uri
-                )
-            }.onFailure {
-                failed++
+                    throw cancellation
+                } finally {
+                    localIndexing.value =
+                        false
+                }
             }
-        }
-
-        val finalStatus =
-            if (failed == 0) {
-                getApplication<Application>()
-                    .getString(
-                        R.string.index_done
-                    )
-            } else {
-                getApplication<Application>()
-                    .getString(
-                        R.string.index_done_with_errors,
-                        failed
-                    )
-            }
-
-        localStatus.value =
-            finalStatus
-
-        localIndexing.value =
-            false
-
-        delay(
-            LOCAL_STATUS_DURATION_MS
-        )
-
-        if (
-            localStatus.value ==
-            finalStatus
-        ) {
-            localStatus.value = ""
-        }
     }
 
     private suspend fun showDetailMessage(
@@ -410,6 +433,14 @@ class HomeViewModel(
             _detailActionState.value =
                 MemoryDetailActionState()
         }
+    }
+
+    fun showGalleryPermissionDenied() {
+        localStatus.value =
+            getApplication<Application>()
+                .getString(
+                    R.string.gallery_permission_denied
+                )
     }
 
     fun startGalleryIndex() {
