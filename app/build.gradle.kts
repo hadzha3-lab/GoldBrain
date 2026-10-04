@@ -13,8 +13,8 @@ android {
         applicationId = "com.hadzha3.goldbrain"
         minSdk = 23
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.13.0"
+        versionCode = 14
+        versionName = "0.14.0"
     }
 
     buildFeatures {
