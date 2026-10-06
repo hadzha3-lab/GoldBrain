@@ -4,6 +4,7 @@ set -euo pipefail
 MANIFEST="app/src/main/AndroidManifest.xml"
 SOURCE_ROOT="app/src/main/java"
 BUILD_FILE="app/build.gradle.kts"
+VERSION_CATALOG="gradle/libs.versions.toml"
 
 fail() {
   echo "::error::$1"
@@ -12,6 +13,10 @@ fail() {
 
 if grep -n -E 'android\.permission\.(INTERNET|ACCESS_NETWORK_STATE|CHANGE_NETWORK_STATE)' "$MANIFEST"; then
   fail "GoldBrain beta must remain local-only and must not request network permissions."
+fi
+
+if grep -n 'com.google.mlkit.vision.DEPENDENCIES' "$MANIFEST"; then
+  fail "GoldBrain beta must bundle ML models instead of requesting Play Services model downloads."
 fi
 
 if grep -RIn --exclude-dir=build -E \
@@ -26,4 +31,10 @@ if grep -n -E \
   fail "GoldBrain beta must not include network/cloud client dependencies."
 fi
 
-echo "Offline beta check passed: app runtime has no direct network capability."
+if grep -n -E \
+  'com\.google\.android\.gms:play-services-mlkit-(text-recognition|image-labeling)' \
+  "$VERSION_CATALOG"; then
+  fail "GoldBrain beta must use bundled ML Kit OCR/image-labeling models."
+fi
+
+echo "Offline beta check passed: runtime has no direct network capability and core ML models are bundled."
