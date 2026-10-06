@@ -10,6 +10,7 @@ import com.hadzha3.goldbrain.domain.index.IndexTextCompactor
 import com.hadzha3.goldbrain.domain.search.MemorySearchEngine
 import com.hadzha3.goldbrain.domain.source.PhotoSourceClassification
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MemoryRepository(
     private val dao: MemoryDao,
     private val imageAnalyzer: ImageAnalyzer,
