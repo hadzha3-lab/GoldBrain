@@ -1,6 +1,5 @@
 package com.hadzha3.goldbrain
 
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -19,13 +18,13 @@ class MainActivitySmokeTest {
             .onNodeWithTag(
                 UiTestTags.HOME
             )
-            .assertExists()
+            .fetchSemanticsNode()
 
         composeRule
             .onNodeWithTag(
                 UiTestTags.PICK_PHOTOS
             )
-            .assertExists()
+            .fetchSemanticsNode()
     }
 
     @Test
@@ -41,6 +40,6 @@ class MainActivitySmokeTest {
                 UiTestTags
                     .GALLERY_READ_ONLY_DIALOG
             )
-            .assertExists()
+            .fetchSemanticsNode()
     }
 }
