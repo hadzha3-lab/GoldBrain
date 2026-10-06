@@ -105,14 +105,9 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
-            set +e
             mkdir -p app/build/ci-smoke
+            trap 'adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true; adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true; adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true' EXIT
             gradle --no-daemon :app:connectedDebugAndroidTest --stacktrace
-            status=$?
-            adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true
-            adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true
-            adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true
-            exit "$status"
 
       - name: Upload Android smoke diagnostics
         if: always()
