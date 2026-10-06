@@ -13,16 +13,17 @@ object IndexRecoveryPolicy {
         hasGalleryAccess: Boolean
     ): IndexRecoveryAction =
         when {
+            statusRunning &&
+                !hasGalleryAccess ->
+                IndexRecoveryAction.RESET
+
             !statusRunning ->
                 IndexRecoveryAction.NONE
 
             hasActiveWork ->
                 IndexRecoveryAction.NONE
 
-            hasGalleryAccess ->
-                IndexRecoveryAction.RESTART
-
             else ->
-                IndexRecoveryAction.RESET
+                IndexRecoveryAction.RESTART
         }
 }
