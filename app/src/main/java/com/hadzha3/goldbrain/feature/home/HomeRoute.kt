@@ -16,9 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hadzha3.goldbrain.R
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
+import com.hadzha3.goldbrain.core.ui.UiTestTags
 import com.hadzha3.goldbrain.feature.camera.CameraActivity
 import com.hadzha3.goldbrain.feature.detail.MemoryDetailScreen
 import com.hadzha3.goldbrain.feature.settings.SettingsScreen
@@ -252,7 +255,6 @@ fun HomeRoute(
         }
     }
 
-
     LaunchedEffect(
         showSettings
     ) {
@@ -436,6 +438,11 @@ fun HomeRoute(
 
     if (showGalleryAccessInfo) {
         AlertDialog(
+            modifier =
+                Modifier.testTag(
+                    UiTestTags
+                        .GALLERY_READ_ONLY_DIALOG
+                ),
             onDismissRequest = {
                 showGalleryAccessInfo =
                     false
