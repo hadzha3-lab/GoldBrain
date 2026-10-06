@@ -61,6 +61,18 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Enable KVM for Android emulator
+        shell: bash
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo "::error::/dev/kvm is unavailable on this runner"
+            exit 1
+          fi
+          sudo chmod 666 /dev/kvm
+          test -r /dev/kvm
+          test -w /dev/kvm
+          ls -l /dev/kvm
+
       - name: Set up Gradle 8.11.1
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -82,6 +94,8 @@ jobs:
         run: gradle --no-daemon :app:assembleDebugAndroidTest --stacktrace
 
       - name: Run clean-install Android smoke tests
+        id: emulator_smoke
+        continue-on-error: true
         uses: ReactiveCircus/android-emulator-runner@v2.38.0
         with:
           api-level: 35
@@ -89,7 +103,35 @@ jobs:
           target: default
           profile: Nexus 6
           disable-animations: true
-          script: gradle --no-daemon :app:connectedDebugAndroidTest --stacktrace
+          emulator-boot-timeout: 600
+          script: |
+            set +e
+            mkdir -p app/build/ci-smoke
+            gradle --no-daemon :app:connectedDebugAndroidTest --stacktrace
+            status=$?
+            adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true
+            adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true
+            adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true
+            exit "$status"
+
+      - name: Upload Android smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoldBrain-android-smoke-diagnostics
+          path: |
+            app/build/ci-smoke/**
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Require Android smoke success
+        if: steps.emulator_smoke.outcome != 'success'
+        shell: bash
+        run: |
+          echo "::error::Required Android emulator smoke tests failed. Inspect GoldBrain-android-smoke-diagnostics."
+          exit 1
 
       - name: Run Android lint
         run: gradle --no-daemon :app:lintDebug --stacktrace
