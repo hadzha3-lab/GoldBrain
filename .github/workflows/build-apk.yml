@@ -12,6 +12,17 @@ on:
       - "gradle.properties"
       - ".github/workflows/build-apk.yml"
       - "scripts/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "gradle/**"
+      - "*.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/build-apk.yml"
+      - "scripts/**"
+      - "BETA_READINESS.md"
 
 permissions:
   contents: read
