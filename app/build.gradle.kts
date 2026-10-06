@@ -13,8 +13,10 @@ android {
         applicationId = "com.hadzha3.goldbrain"
         minSdk = 23
         targetSdk = 35
-        versionCode = 21
-        versionName = "0.21.0"
+        versionCode = 22
+        versionName = "0.22.0"
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -65,4 +67,14 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.sqlite.jdbc)
+
+    androidTestImplementation(
+        libs.androidx.compose.ui.test.junit4
+    )
+    androidTestImplementation(
+        libs.androidx.test.runner
+    )
+    debugImplementation(
+        libs.androidx.compose.ui.test.manifest
+    )
 }
