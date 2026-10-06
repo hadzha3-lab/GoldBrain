@@ -24,7 +24,7 @@ jobs:
   build:
     name: Test and build GoldBrain debug APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -80,6 +80,16 @@ jobs:
 
       - name: Compile Android smoke tests
         run: gradle --no-daemon :app:assembleDebugAndroidTest --stacktrace
+
+      - name: Run clean-install Android smoke tests
+        uses: ReactiveCircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 35
+          arch: x86_64
+          target: default
+          profile: Nexus 6
+          disable-animations: true
+          script: gradle --no-daemon :app:connectedDebugAndroidTest --stacktrace
 
       - name: Run Android lint
         run: gradle --no-daemon :app:lintDebug --stacktrace
