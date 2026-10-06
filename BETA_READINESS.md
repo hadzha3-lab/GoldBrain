@@ -9,7 +9,8 @@
 - runtime приложения не запрашивает сетевые разрешения и не содержит прямого HTTP/WebView/cloud-клиента (`scripts/check-offline-beta.sh`);
 - unit-тесты покрывают чистый запуск без доступа, выдачу доступа, восстановление после убийства процесса и отзыв разрешения во время индексации;
 - Android instrumentation smoke-тест проверяет запуск `MainActivity` без разрешений и показ read-only объяснения до системного запроса галереи;
-- instrumentation APK обязательно компилируется в CI до lint и основной APK-сборки;
+- instrumentation APK обязательно компилируется в CI;
+- тот же smoke-test реально запускается на чистом Android 35 x86_64 эмуляторе через `ReactiveCircus/android-emulator-runner@v2.38.0`;
 - универсальный debug APK не должен превышать 50 MiB (`scripts/check-apk-size.sh`);
 - Android lint и debug APK build должны пройти после всех проверок.
 
