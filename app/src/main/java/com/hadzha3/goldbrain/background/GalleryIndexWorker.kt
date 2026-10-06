@@ -13,262 +13,120 @@ import kotlinx.coroutines.CancellationException
 class GalleryIndexWorker(
     appContext: Context,
     params: WorkerParameters
-) : CoroutineWorker(
-    appContext,
-    params
-) {
+) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
-        val container =
-            applicationContext.appContainer
+        val container = applicationContext.appContainer
+        val statusRepository = container.indexStatusRepository
+        val isNewRun = inputData.getBoolean(KEY_NEW_RUN, true)
+        val forceScan = inputData.getBoolean(KEY_FORCE_SCAN, false)
 
-        val statusRepository =
-            container.indexStatusRepository
-
-        val isNewRun =
-            inputData.getBoolean(
-                KEY_NEW_RUN,
-                true
-            )
-
-        val forceScan =
-            inputData.getBoolean(
-                KEY_FORCE_SCAN,
-                false
-            )
-
-        if (
-            !MediaPermissions
-                .hasGalleryAccess(
-                    applicationContext
-                )
-        ) {
-            return stopForPermissionLoss(
-                container
-            )
+        if (!MediaPermissions.hasGalleryAccess(applicationContext)) {
+            return stopForPermissionLoss(container)
         }
 
         return try {
             if (isNewRun) {
                 val fullGalleryAccess =
-                    MediaPermissions
-                        .galleryAccessMode(
-                            applicationContext
-                        ) ==
+                    MediaPermissions.galleryAccessMode(applicationContext) ==
                         GalleryAccessMode.FULL
 
                 if (
                     !forceScan &&
                     fullGalleryAccess &&
-                    container
-                        .mediaStoreChangeTracker
-                        .shouldSkipAutomaticScan()
+                    container.mediaStoreChangeTracker.shouldSkipAutomaticScan()
                 ) {
-                    repositoryMaintenance(
-                        container
+                    repositoryMaintenance(container)
+                    statusRepository.startRun(total = 0)
+                    statusRepository.markBatchFinished(
+                        indexed = 0,
+                        failed = 0,
+                        hasMore = false
                     )
-
-                    statusRepository
-                        .startRun(
-                            total = 0
-                        )
-
-                    statusRepository
-                        .markBatchFinished(
-                            indexed = 0,
-                            failed = 0,
-                            hasMore = false
-                        )
-
-                    return Result.success(
-                        emptyOutput()
-                    )
+                    return Result.success(emptyOutput())
                 }
 
                 if (fullGalleryAccess) {
-                    container
-                        .mediaStoreChangeTracker
-                        .beginScan()
+                    container.mediaStoreChangeTracker.beginScan()
                 } else {
-                    container
-                        .mediaStoreChangeTracker
-                        .invalidate()
+                    container.mediaStoreChangeTracker.invalidate()
                 }
 
-                val totalPending =
-                    container.galleryIndexer
-                        .pendingCount()
-
-                statusRepository.startRun(
-                    total =
-                        totalPending
-                )
-
-                if (
-                    totalPending == 0
-                ) {
-                    repositoryMaintenance(
-                        container
-                    )
-
-                    statusRepository
-                        .markBatchFinished(
-                            indexed = 0,
-                            failed = 0,
-                            hasMore = false
-                        )
-
-                    container
-                        .mediaStoreChangeTracker
-                        .markScanComplete()
-
-                    return Result.success(
-                        emptyOutput()
-                    )
-                }
+                // Do not count the whole gallery before doing useful work. On large
+                // libraries that pre-scan could take a long time and made the app
+                // appear stuck before the first photo was ever indexed.
+                container.galleryIndexer.abortScan()
+                statusRepository.startRun(total = 0)
+                repositoryMaintenance(container)
             }
 
-            if (isNewRun) {
-                repositoryMaintenance(
-                    container
-                )
-            }
-
-            val loadPolicy =
-                container
-                    .indexingLoadProvider
-                    .current()
-
+            val loadPolicy = container.indexingLoadProvider.current()
             val batch =
-                container.galleryIndexer
-                    .indexNextBatch(
-                        loadPolicy
-                            .batchSize
-                    )
+                container.galleryIndexer.indexNextBatch(loadPolicy.batchSize)
 
             val output =
                 Data.Builder()
-                    .putInt(
-                        KEY_INDEXED,
-                        batch.indexed
-                    )
-                    .putInt(
-                        KEY_FAILED,
-                        batch.failed
-                    )
-                    .putInt(
-                        KEY_CANDIDATES,
-                        batch.candidates
-                    )
+                    .putInt(KEY_INDEXED, batch.indexed)
+                    .putInt(KEY_FAILED, batch.failed)
+                    .putInt(KEY_CANDIDATES, batch.candidates)
                     .build()
 
-            val shouldContinue =
-                batch.hasMore &&
-                    batch.candidates > 0
+            val shouldContinue = batch.hasMore && batch.candidates > 0
 
-            statusRepository
-                .markBatchFinished(
-                    indexed =
-                        batch.indexed,
-                    failed =
-                        batch.failed,
-                    hasMore =
-                        shouldContinue
-                )
+            statusRepository.markBatchFinished(
+                indexed = batch.indexed,
+                failed = batch.failed,
+                hasMore = shouldContinue
+            )
 
             if (shouldContinue) {
-                GalleryIndexScheduler
-                    .continueSoon(
-                        context =
-                            applicationContext,
-                        delaySeconds =
-                            loadPolicy
-                                .continuationDelaySeconds
-                    )
+                GalleryIndexScheduler.continueSoon(
+                    context = applicationContext,
+                    delaySeconds = loadPolicy.continuationDelaySeconds
+                )
             } else {
-                container
-                    .mediaStoreChangeTracker
-                    .markScanComplete()
+                container.mediaStoreChangeTracker.markScanComplete()
             }
 
-            Result.success(
-                output
-            )
-        } catch (
-            cancellation:
-                CancellationException
-        ) {
+            Result.success(output)
+        } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: SecurityException) {
-            stopForPermissionLoss(
-                container
-            )
+            stopForPermissionLoss(container)
         } catch (_: Exception) {
-            statusRepository
-                .markError()
-
+            statusRepository.markError()
             Result.retry()
         }
     }
 
     private suspend fun stopForPermissionLoss(
-        container:
-            com.hadzha3.goldbrain.di.AppContainer
+        container: com.hadzha3.goldbrain.di.AppContainer
     ): Result {
-        container.galleryIndexer
-            .abortScan()
-
-        container.mediaStoreChangeTracker
-            .invalidate()
-
-        container.indexStatusRepository
-            .reset()
-
-        return Result.success(
-            emptyOutput()
-        )
+        container.galleryIndexer.abortScan()
+        container.mediaStoreChangeTracker.invalidate()
+        container.indexStatusRepository.reset()
+        return Result.success(emptyOutput())
     }
 
     private suspend fun repositoryMaintenance(
-        container:
-            com.hadzha3.goldbrain.di.AppContainer
+        container: com.hadzha3.goldbrain.di.AppContainer
     ) {
-        container.memoryRepository
-            .verifyAvailability(
-                MemoryRepository
-                    .DEFAULT_VERIFICATION_BATCH
-            )
+        container.memoryRepository.verifyAvailability(
+            MemoryRepository.DEFAULT_VERIFICATION_BATCH
+        )
     }
 
     private fun emptyOutput(): Data =
         Data.Builder()
-            .putInt(
-                KEY_INDEXED,
-                0
-            )
-            .putInt(
-                KEY_FAILED,
-                0
-            )
-            .putInt(
-                KEY_CANDIDATES,
-                0
-            )
+            .putInt(KEY_INDEXED, 0)
+            .putInt(KEY_FAILED, 0)
+            .putInt(KEY_CANDIDATES, 0)
             .build()
 
     companion object {
-        const val KEY_NEW_RUN =
-            "new_run"
-
-        const val KEY_FORCE_SCAN =
-            "force_scan"
-
-        const val KEY_INDEXED =
-            "indexed"
-
-        const val KEY_FAILED =
-            "failed"
-
-        const val KEY_CANDIDATES =
-            "candidates"
+        const val KEY_NEW_RUN = "new_run"
+        const val KEY_FORCE_SCAN = "force_scan"
+        const val KEY_INDEXED = "indexed"
+        const val KEY_FAILED = "failed"
+        const val KEY_CANDIDATES = "candidates"
     }
 }
