@@ -1,8 +1,10 @@
 package com.hadzha3.goldbrain
 
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import com.hadzha3.goldbrain.core.ui.UiTestTags
 import org.junit.Rule
 import org.junit.Test
 
@@ -14,30 +16,31 @@ class MainActivitySmokeTest {
     @Test
     fun cleanInstallOpensHomeWithoutPermissions() {
         composeRule
-            .onNodeWithText(
-                "GoldBrain"
+            .onNodeWithTag(
+                UiTestTags.HOME
             )
-            .fetchSemanticsNode()
+            .assertExists()
 
         composeRule
-            .onNodeWithText(
-                "Выбрать фото"
+            .onNodeWithTag(
+                UiTestTags.PICK_PHOTOS
             )
-            .fetchSemanticsNode()
+            .assertExists()
     }
 
     @Test
     fun galleryRequestShowsReadOnlyExplanationFirst() {
         composeRule
-            .onNodeWithText(
-                "Галерея"
+            .onNodeWithTag(
+                UiTestTags.GALLERY
             )
             .performClick()
 
         composeRule
-            .onNodeWithText(
-                "Доступ только для чтения"
+            .onNodeWithTag(
+                UiTestTags
+                    .GALLERY_READ_ONLY_DIALOG
             )
-            .fetchSemanticsNode()
+            .assertExists()
     }
 }
