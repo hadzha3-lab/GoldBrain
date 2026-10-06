@@ -90,6 +90,10 @@ jobs:
       - name: Prepare APK
         run: cp app/build/outputs/apk/debug/app-debug.apk GoldBrain-debug.apk
 
+      - name: Verify APK size budget
+        shell: bash
+        run: bash scripts/check-apk-size.sh GoldBrain-debug.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
