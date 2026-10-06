@@ -1,6 +1,5 @@
 package com.hadzha3.goldbrain
 
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -18,13 +17,13 @@ class MainActivitySmokeTest {
             .onNodeWithText(
                 "GoldBrain"
             )
-            .assertExists()
+            .fetchSemanticsNode()
 
         composeRule
             .onNodeWithText(
                 "Выбрать фото"
             )
-            .assertExists()
+            .fetchSemanticsNode()
     }
 
     @Test
@@ -39,6 +38,6 @@ class MainActivitySmokeTest {
             .onNodeWithText(
                 "Доступ только для чтения"
             )
-            .assertExists()
+            .fetchSemanticsNode()
     }
 }
