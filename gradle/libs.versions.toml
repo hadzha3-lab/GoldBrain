@@ -9,7 +9,7 @@ lifecycle = "2.9.0"
 room = "2.8.5"
 work = "2.10.1"
 camerax = "1.4.2"
-mlkit-text = "19.0.1"
+mlkit-text = "16.0.1"
 mlkit-label = "16.0.8"
 coroutines-play-services = "1.10.2"
 coil = "3.2.0"
@@ -40,8 +40,8 @@ androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
 androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
 androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
-mlkit-text-recognition = { module = "com.google.android.gms:play-services-mlkit-text-recognition", version.ref = "mlkit-text" }
-mlkit-image-labeling = { module = "com.google.android.gms:play-services-mlkit-image-labeling", version.ref = "mlkit-label" }
+mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkit-text" }
+mlkit-image-labeling = { module = "com.google.mlkit:image-labeling", version.ref = "mlkit-label" }
 coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines-play-services" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 junit = { module = "junit:junit", version.ref = "junit" }
