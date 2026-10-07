@@ -17,6 +17,7 @@ import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.hadzha3.goldbrain.background.GalleryIndexScheduler
 import com.hadzha3.goldbrain.core.permissions.GalleryAccessMode
 import com.hadzha3.goldbrain.core.permissions.MediaPermissions
 import kotlinx.coroutines.flow.filterNotNull
@@ -116,19 +117,12 @@ class GalleryIndexingSmokeTest {
 
             container.galleryIndexer.abortScan()
 
-            val batch =
-                withTimeout(
-                    INDEX_TIMEOUT_MS
-                ) {
-                    container.galleryIndexer
-                        .indexNextBatch(
-                            batchSize = 10
-                        )
-                }
-
-            assertTrue(
-                "Gallery batch did not index any photo",
-                batch.indexed > 0
+            // Use the same WorkManager path the home screen uses after the user
+            // grants gallery access. This catches scheduler/worker regressions that
+            // a direct GalleryIndexer call would miss.
+            GalleryIndexScheduler.startNow(
+                context = context,
+                forceScan = true
             )
 
             val indexedMemory =
@@ -303,6 +297,6 @@ class GalleryIndexingSmokeTest {
             30_000L
 
         const val INDEX_TIMEOUT_MS =
-            60_000L
+            90_000L
     }
 }
