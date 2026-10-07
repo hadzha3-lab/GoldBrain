@@ -147,21 +147,63 @@ jobs:
       - name: Run Android lint
         run: gradle --no-daemon :app:lintDebug --stacktrace
 
-      - name: Build debug APK
+      - name: Build debug APKs
         run: gradle --no-daemon :app:assembleDebug --stacktrace
 
-      - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk GoldBrain-debug.apk
-
-      - name: Verify APK size budget
+      - name: Prepare compact arm64 and universal APKs
         shell: bash
-        run: bash scripts/check-apk-size.sh GoldBrain-debug.apk
+        run: |
+          set -euo pipefail
+          APK_DIR="app/build/outputs/apk/debug"
+          echo "Produced APKs:"
+          find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' -printf '%f %k KiB\n' | sort
 
-      - name: Upload APK
+          ARM64_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*arm64-v8a*debug*.apk' | head -n 1)"
+          UNIVERSAL_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*universal*debug*.apk' | head -n 1)"
+
+          test -n "$ARM64_APK"
+          test -n "$UNIVERSAL_APK"
+
+          cp "$ARM64_APK" GoldBrain-arm64-v8a-debug.apk
+          cp "$UNIVERSAL_APK" GoldBrain-universal-debug.apk
+
+          unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -q '^lib/arm64-v8a/'
+          if unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/'; then
+            echo "::error::arm64 APK unexpectedly contains native libraries for another ABI"
+            exit 1
+          fi
+
+      - name: Verify APK size reduction
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/check-apk-size.sh GoldBrain-arm64-v8a-debug.apk 90 "arm64-v8a APK"
+          bash scripts/check-apk-size.sh GoldBrain-universal-debug.apk 150 "Universal APK"
+
+          arm64_bytes="$(stat -c%s GoldBrain-arm64-v8a-debug.apk)"
+          universal_bytes="$(stat -c%s GoldBrain-universal-debug.apk)"
+          saved_bytes=$((universal_bytes - arm64_bytes))
+          saved_mib="$(awk -v b="$saved_bytes" 'BEGIN { printf "%.2f", b / 1024 / 1024 }')"
+          echo "arm64 split saves ${saved_mib} MiB versus universal APK"
+          if [ "$saved_bytes" -lt $((20 * 1024 * 1024)) ]; then
+            echo "::error::ABI split saved less than 20 MiB; size optimization is not meaningful."
+            exit 1
+          fi
+
+      - name: Upload compact arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: GoldBrain-debug-apk
-          path: GoldBrain-debug.apk
+          name: GoldBrain-arm64-v8a-debug-apk
+          path: GoldBrain-arm64-v8a-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload universal APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoldBrain-universal-debug-apk
+          path: GoldBrain-universal-debug.apk
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
