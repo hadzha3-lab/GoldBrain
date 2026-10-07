@@ -177,7 +177,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/check-apk-size.sh GoldBrain-arm64-v8a-debug.apk 90 "arm64-v8a APK"
+          bash scripts/check-apk-size.sh GoldBrain-arm64-v8a-debug.apk 55 "arm64-v8a APK"
           bash scripts/check-apk-size.sh GoldBrain-universal-debug.apk 150 "Universal APK"
 
           arm64_bytes="$(stat -c%s GoldBrain-arm64-v8a-debug.apk)"
