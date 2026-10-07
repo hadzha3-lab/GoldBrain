@@ -119,9 +119,7 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
-            set -euo pipefail
             mkdir -p app/build/ci-smoke
-            trap 'adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true; adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true; adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true' EXIT
 
             # Run permission-sensitive classes in a deterministic order. The UI
             # contract runs first with a fresh install; only the second class grants
@@ -129,22 +127,20 @@ jobs:
             gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.MainActivitySmokeTest --stacktrace
             gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.GalleryIndexingSmokeTest --stacktrace
 
-            # R8/resource shrinking is size-only, but it changes packaged bytecode.
-            # Install the actual minified x86_64 beta on the same clean API 35
-            # emulator and require a successful real process launch after shrinking.
-            RELEASE_APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*x86_64*release*.apk' | head -n 1)"
-            test -n "$RELEASE_APK"
+            # R8/resource shrinking changes packaged bytecode. Install and launch
+            # the actual minified x86_64 package on the same clean API 35 emulator.
+            test -n "$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*x86_64*release*.apk' | head -n 1)"
             adb uninstall com.hadzha3.goldbrain >/dev/null 2>&1 || true
-            adb install "$RELEASE_APK"
+            adb install "$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*x86_64*release*.apk' | head -n 1)"
             adb logcat -c
             adb shell am start -W -n com.hadzha3.goldbrain/.MainActivity | tee app/build/ci-smoke/minified-launch.txt
             sleep 5
             adb shell pidof com.hadzha3.goldbrain | tee app/build/ci-smoke/minified-pid.txt
             test -s app/build/ci-smoke/minified-pid.txt
-            if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com\.hadzha3\.goldbrain'; then
-              echo "::error::Minified beta crashed during startup."
-              exit 1
-            fi
+            if adb logcat -d -v brief | grep -Eq 'FATAL EXCEPTION|Process: com\.hadzha3\.goldbrain'; then echo "Minified beta crashed during startup" >&2; exit 1; fi
+            adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true
+            adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true
+            adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true
 
       - name: Upload Android smoke diagnostics
         if: always()
