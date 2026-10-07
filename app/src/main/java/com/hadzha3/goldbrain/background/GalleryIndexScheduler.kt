@@ -71,7 +71,7 @@ object GalleryIndexScheduler {
                 TimeUnit.HOURS
             )
                 .setConstraints(
-                    baseConstraints()
+                    periodicConstraints()
                 )
                 .setInputData(
                     workerInput(
@@ -170,7 +170,7 @@ object GalleryIndexScheduler {
         forceScan: Boolean
     ) = OneTimeWorkRequestBuilder<GalleryIndexWorker>()
         .setConstraints(
-            baseConstraints()
+            activeConstraints()
         )
         .setInputData(
             workerInput(
@@ -203,7 +203,24 @@ object GalleryIndexScheduler {
             )
             .build()
 
-    private fun baseConstraints(): Constraints =
+    /**
+     * A user-triggered or already-running index must not appear broken just
+     * because Android currently considers the battery "low". The worker itself
+     * already reduces batch size and adds delay in power-save mode, so active
+     * work can remain responsive without a battery gate.
+     */
+    private fun activeConstraints(): Constraints =
+        Constraints.Builder()
+            .setRequiredNetworkType(
+                NetworkType.NOT_REQUIRED
+            )
+            .build()
+
+    /**
+     * Background maintenance is opportunistic and may wait for a healthier
+     * battery state.
+     */
+    private fun periodicConstraints(): Constraints =
         Constraints.Builder()
             .setRequiresBatteryNotLow(true)
             .setRequiredNetworkType(
