@@ -62,27 +62,18 @@ jobs:
       - name: Install Android SDK 35
         shell: bash
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
-          if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager not found"
-            exit 1
-          fi
-          "$SDKMANAGER" --version
+          test -n "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Enable KVM for Android emulator
         shell: bash
         run: |
-          if [ ! -e /dev/kvm ]; then
-            echo "::error::/dev/kvm is unavailable on this runner"
-            exit 1
-          fi
+          test -e /dev/kvm
           sudo chmod 666 /dev/kvm
           test -r /dev/kvm
           test -w /dev/kvm
-          ls -l /dev/kvm
 
       - name: Set up Gradle 8.11.1
         uses: gradle/actions/setup-gradle@v4
@@ -117,11 +108,7 @@ jobs:
           emulator-boot-timeout: 600
           script: |
             mkdir -p app/build/ci-smoke
-            trap 'adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true; adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true; adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true' EXIT
-
-            # Run permission-sensitive classes in a deterministic order. The UI
-            # contract runs first with a fresh install; only the second class grants
-            # gallery access, so its permission state cannot affect the UI checks.
+            trap 'adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true' EXIT
             gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.MainActivitySmokeTest --stacktrace
             gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.GalleryIndexingSmokeTest --stacktrace
 
@@ -139,10 +126,7 @@ jobs:
 
       - name: Require Android smoke success
         if: steps.emulator_smoke.outcome != 'success'
-        shell: bash
-        run: |
-          echo "::error::Required Android emulator smoke tests failed. Inspect GoldBrain-android-smoke-diagnostics."
-          exit 1
+        run: exit 1
 
       - name: Run Android lint
         run: gradle --no-daemon :app:lintDebug --stacktrace
@@ -155,23 +139,15 @@ jobs:
         run: |
           set -euo pipefail
           APK_DIR="app/build/outputs/apk/debug"
-          echo "Produced APKs:"
           find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' -printf '%f %k KiB\n' | sort
-
           ARM64_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*arm64-v8a*debug*.apk' | head -n 1)"
           UNIVERSAL_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*universal*debug*.apk' | head -n 1)"
-
           test -n "$ARM64_APK"
           test -n "$UNIVERSAL_APK"
-
           cp "$ARM64_APK" GoldBrain-arm64-v8a-debug.apk
           cp "$UNIVERSAL_APK" GoldBrain-universal-debug.apk
-
           unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -q '^lib/arm64-v8a/'
-          if unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/'; then
-            echo "::error::arm64 APK unexpectedly contains native libraries for another ABI"
-            exit 1
-          fi
+          if unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/'; then exit 1; fi
 
       - name: Verify APK size reduction
         shell: bash
@@ -179,16 +155,37 @@ jobs:
           set -euo pipefail
           bash scripts/check-apk-size.sh GoldBrain-arm64-v8a-debug.apk 55 "arm64-v8a APK"
           bash scripts/check-apk-size.sh GoldBrain-universal-debug.apk 150 "Universal APK"
-
           arm64_bytes="$(stat -c%s GoldBrain-arm64-v8a-debug.apk)"
           universal_bytes="$(stat -c%s GoldBrain-universal-debug.apk)"
-          saved_bytes=$((universal_bytes - arm64_bytes))
-          saved_mib="$(awk -v b="$saved_bytes" 'BEGIN { printf "%.2f", b / 1024 / 1024 }')"
-          echo "arm64 split saves ${saved_mib} MiB versus universal APK"
-          if [ "$saved_bytes" -lt $((20 * 1024 * 1024)) ]; then
-            echo "::error::ABI split saved less than 20 MiB; size optimization is not meaningful."
-            exit 1
-          fi
+          test $((universal_bytes - arm64_bytes)) -ge $((20 * 1024 * 1024))
+
+      # API 29 is Android 10. This is deliberately a real package-manager install
+      # of the universal APK, not only a compile/minSdk check.
+      - name: Verify universal APK installs on Android 10
+        id: android10_install
+        continue-on-error: true
+        uses: ReactiveCircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 29
+          arch: x86_64
+          target: default
+          profile: Nexus 6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            set -euo pipefail
+            adb install -r GoldBrain-universal-debug.apk
+            adb shell pm path com.hadzha3.goldbrain | grep -q '^package:'
+            adb shell am start -W -n com.hadzha3.goldbrain/.MainActivity
+            sleep 3
+            adb shell pidof com.hadzha3.goldbrain
+
+      - name: Require Android 10 install success
+        if: steps.android10_install.outcome != 'success'
+        shell: bash
+        run: |
+          echo "::error::Universal APK failed real install/launch on Android 10 (API 29)."
+          exit 1
 
       - name: Upload compact arm64 APK
         uses: actions/upload-artifact@v4
