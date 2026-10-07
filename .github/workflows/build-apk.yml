@@ -119,19 +119,12 @@ jobs:
             mkdir -p app/build/ci-smoke
             trap 'adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true; adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true; adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true' EXIT
 
-            # Keep the no-permission UI contract isolated from the full-access
-            # indexing smoke. The indexing smoke intentionally grants gallery
-            # access, so running both classes in one instrumentation invocation
-            # makes test ordering leak permission state into the UI test.
-            gradle --no-daemon :app:connectedDebugAndroidTest \
-              -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.MainActivitySmokeTest \
-              --stacktrace
-
+            # The emulator runner executes script lines independently, so keep each
+            # Gradle invocation on one physical line. Run the no-permission UI
+            # contract first, clear app state, then run the full-access indexing test.
+            gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.MainActivitySmokeTest --stacktrace
             adb shell pm clear com.hadzha3.goldbrain
-
-            gradle --no-daemon :app:connectedDebugAndroidTest \
-              -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.GalleryIndexingSmokeTest \
-              --stacktrace
+            gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.GalleryIndexingSmokeTest --stacktrace
 
       - name: Upload Android smoke diagnostics
         if: always()
