@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   build:
-    name: Test and build GoldBrain debug APK
+    name: Test and build GoldBrain beta APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -104,6 +104,9 @@ jobs:
       - name: Compile Android smoke tests
         run: gradle --no-daemon :app:assembleDebugAndroidTest --stacktrace
 
+      - name: Build minified beta APKs
+        run: gradle --no-daemon :app:assembleRelease --stacktrace
+
       - name: Run clean-install Android smoke tests
         id: emulator_smoke
         continue-on-error: true
@@ -117,13 +120,27 @@ jobs:
           emulator-boot-timeout: 600
           script: |
             mkdir -p app/build/ci-smoke
-            trap 'adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true; adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true; adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true' EXIT
 
             # Run permission-sensitive classes in a deterministic order. The UI
             # contract runs first with a fresh install; only the second class grants
             # gallery access, so its permission state cannot affect the UI checks.
             gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.MainActivitySmokeTest --stacktrace
             gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hadzha3.goldbrain.GalleryIndexingSmokeTest --stacktrace
+
+            # R8/resource shrinking changes packaged bytecode. Install and launch
+            # the actual minified x86_64 package on the same clean API 35 emulator.
+            test -n "$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*x86_64*release*.apk' | head -n 1)"
+            adb uninstall com.hadzha3.goldbrain >/dev/null 2>&1 || true
+            adb install "$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*x86_64*release*.apk' | head -n 1)"
+            adb logcat -c
+            adb shell am start -W -n com.hadzha3.goldbrain/.MainActivity | tee app/build/ci-smoke/minified-launch.txt
+            sleep 5
+            adb shell pidof com.hadzha3.goldbrain | tee app/build/ci-smoke/minified-pid.txt
+            test -s app/build/ci-smoke/minified-pid.txt
+            if adb logcat -d -v brief | grep -Eq 'FATAL EXCEPTION|Process: com\.hadzha3\.goldbrain'; then echo "Minified beta crashed during startup" >&2; exit 1; fi
+            adb logcat -d -v threadtime > app/build/ci-smoke/logcat.txt 2>&1 || true
+            adb shell dumpsys activity processes > app/build/ci-smoke/activity-processes.txt 2>&1 || true
+            adb shell dumpsys package com.hadzha3.goldbrain > app/build/ci-smoke/package.txt 2>&1 || true
 
       - name: Upload Android smoke diagnostics
         if: always()
@@ -147,63 +164,67 @@ jobs:
       - name: Run Android lint
         run: gradle --no-daemon :app:lintDebug --stacktrace
 
-      - name: Build debug APKs
+      - name: Build debug APKs for size baseline
         run: gradle --no-daemon :app:assembleDebug --stacktrace
 
-      - name: Prepare compact arm64 and universal APKs
+      - name: Prepare compact beta and fallback APKs
         shell: bash
         run: |
           set -euo pipefail
-          APK_DIR="app/build/outputs/apk/debug"
-          echo "Produced APKs:"
-          find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' -printf '%f %k KiB\n' | sort
+          RELEASE_DIR="app/build/outputs/apk/release"
+          DEBUG_DIR="app/build/outputs/apk/debug"
+          echo "Produced release APKs:"
+          find "$RELEASE_DIR" -maxdepth 1 -type f -name '*.apk' -printf '%f %k KiB\n' | sort
 
-          ARM64_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*arm64-v8a*debug*.apk' | head -n 1)"
-          UNIVERSAL_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name '*universal*debug*.apk' | head -n 1)"
+          ARM64_APK="$(find "$RELEASE_DIR" -maxdepth 1 -type f -name '*arm64-v8a*release*.apk' | head -n 1)"
+          UNIVERSAL_APK="$(find "$RELEASE_DIR" -maxdepth 1 -type f -name '*universal*release*.apk' | head -n 1)"
+          DEBUG_ARM64_APK="$(find "$DEBUG_DIR" -maxdepth 1 -type f -name '*arm64-v8a*debug*.apk' | head -n 1)"
 
           test -n "$ARM64_APK"
           test -n "$UNIVERSAL_APK"
+          test -n "$DEBUG_ARM64_APK"
 
-          cp "$ARM64_APK" GoldBrain-arm64-v8a-debug.apk
-          cp "$UNIVERSAL_APK" GoldBrain-universal-debug.apk
+          cp "$ARM64_APK" GoldBrain-arm64-v8a-beta.apk
+          cp "$UNIVERSAL_APK" GoldBrain-universal-beta.apk
+          cp "$DEBUG_ARM64_APK" GoldBrain-arm64-v8a-debug-baseline.apk
 
-          unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -q '^lib/arm64-v8a/'
-          if unzip -Z1 GoldBrain-arm64-v8a-debug.apk | grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/'; then
-            echo "::error::arm64 APK unexpectedly contains native libraries for another ABI"
+          unzip -Z1 GoldBrain-arm64-v8a-beta.apk | grep -q '^lib/arm64-v8a/'
+          if unzip -Z1 GoldBrain-arm64-v8a-beta.apk | grep -Eq '^lib/(armeabi-v7a|x86|x86_64)/'; then
+            echo "::error::arm64 beta unexpectedly contains native libraries for another ABI"
             exit 1
           fi
 
-      - name: Verify APK size reduction
+      - name: Verify additional R8 size reduction
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/check-apk-size.sh GoldBrain-arm64-v8a-debug.apk 55 "arm64-v8a APK"
-          bash scripts/check-apk-size.sh GoldBrain-universal-debug.apk 150 "Universal APK"
+          bash scripts/check-apk-size.sh GoldBrain-arm64-v8a-beta.apk 45 "Minified arm64-v8a beta APK"
+          bash scripts/check-apk-size.sh GoldBrain-universal-beta.apk 135 "Minified universal beta APK"
 
-          arm64_bytes="$(stat -c%s GoldBrain-arm64-v8a-debug.apk)"
-          universal_bytes="$(stat -c%s GoldBrain-universal-debug.apk)"
-          saved_bytes=$((universal_bytes - arm64_bytes))
+          beta_bytes="$(stat -c%s GoldBrain-arm64-v8a-beta.apk)"
+          debug_bytes="$(stat -c%s GoldBrain-arm64-v8a-debug-baseline.apk)"
+          saved_bytes=$((debug_bytes - beta_bytes))
           saved_mib="$(awk -v b="$saved_bytes" 'BEGIN { printf "%.2f", b / 1024 / 1024 }')"
-          echo "arm64 split saves ${saved_mib} MiB versus universal APK"
-          if [ "$saved_bytes" -lt $((20 * 1024 * 1024)) ]; then
-            echo "::error::ABI split saved less than 20 MiB; size optimization is not meaningful."
+          echo "R8/resource shrinking saves ${saved_mib} MiB on arm64 versus the debug split"
+          if [ "$saved_bytes" -lt $((3 * 1024 * 1024)) ]; then
+            echo "::error::R8/resource shrinking saved less than 3 MiB; do not add complexity without meaningful gain."
             exit 1
           fi
 
-      - name: Upload compact arm64 APK
+      - name: Upload compact arm64 beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GoldBrain-arm64-v8a-debug-apk
-          path: GoldBrain-arm64-v8a-debug.apk
+          name: GoldBrain-arm64-v8a-beta-apk
+          path: GoldBrain-arm64-v8a-beta.apk
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
 
-      - name: Upload universal APK
+      - name: Upload universal beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GoldBrain-universal-debug-apk
-          path: GoldBrain-universal-debug.apk
+          name: GoldBrain-universal-beta-apk
+          path: GoldBrain-universal-beta.apk
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
