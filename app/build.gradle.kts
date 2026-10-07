@@ -13,8 +13,8 @@ android {
         applicationId = "com.hadzha3.goldbrain"
         minSdk = 23
         targetSdk = 35
-        versionCode = 27
-        versionName = "0.27.0"
+        versionCode = 28
+        versionName = "0.28.0"
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,6 +32,22 @@ android {
                 "x86"
             )
             isUniversalApk = true
+        }
+    }
+
+    buildTypes {
+        // Beta APKs are side-loaded and signed with the debug key for now, but use
+        // R8/resource shrinking so production phones do not carry unused bytecode,
+        // tooling resources, or dependency code. The normal debug variant remains
+        // unminified for deterministic instrumentation tests and diagnostics.
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
