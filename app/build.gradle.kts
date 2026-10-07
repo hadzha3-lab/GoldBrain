@@ -19,6 +19,22 @@ android {
             "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // The universal APK remains available for CI/emulator coverage, while per-ABI
+    // APKs avoid shipping native ML/Tesseract libraries for unrelated CPUs.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include(
+                "arm64-v8a",
+                "armeabi-v7a",
+                "x86_64",
+                "x86"
+            )
+            isUniversalApk = true
+        }
+    }
+
     buildFeatures {
         compose = true
     }
